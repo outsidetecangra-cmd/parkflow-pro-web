@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 212 27% 97%;
+  --foreground: 215 25% 14%;
+  --card: 0 0% 100%;
+  --border: 215 22% 87%;
+  --muted: 212 33% 95%;
+  --accent: 191 89% 44%;
+  --primary: 210 88% 38%;
+  --success: 142 71% 40%;
+  --warning: 39 92% 50%;
+  --danger: 0 84% 60%;
+}
+
+.dark {
+  --background: 220 24% 8%;
+  --foreground: 210 20% 96%;
+  --card: 222 24% 12%;
+  --border: 222 17% 21%;
+  --muted: 222 23% 15%;
+  --accent: 190 90% 50%;
+  --primary: 198 89% 48%;
+  --success: 142 76% 45%;
+  --warning: 39 92% 56%;
+  --danger: 0 84% 63%;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.16), transparent 24%),
+    radial-gradient(circle at right, rgba(34, 197, 94, 0.12), transparent 20%),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+.surface {
+  @apply border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-glow;
+}
