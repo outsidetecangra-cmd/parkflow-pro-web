@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+const basePath = process.env.NODE_ENV === "production" ? "/parkflow-pro-web" : "";
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("admin.demo@example.invalid");
@@ -30,7 +32,7 @@ export default function LoginPage() {
         <div className="mb-8 text-center">
           <div className="mx-auto mb-5 flex justify-center">
             <Image
-              src="/smartpark-logo.png"
+              src={`${basePath}/smartpark-logo.png`}
               alt="SmartPark"
               width={260}
               height={180}
@@ -96,7 +98,7 @@ export default function LoginPage() {
           </p>
 
           <Image
-            src="/logo-webify.jpeg"
+            src={`${basePath}/logo-webify.jpeg`}
             alt="WeBiFy Soluções"
             width={220}
             height={120}
@@ -107,3 +109,4 @@ export default function LoginPage() {
     </main>
   );
 }
+
