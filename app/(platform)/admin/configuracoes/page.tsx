@@ -158,7 +158,7 @@ export default function AdminConfiguracoesPage() {
         user.id === userId
           ? {
               ...user,
-              status: user.status === "Ativo" ? "Bloqueado" : "Ativo",
+              status: user.status === "Ativo" ? ("Bloqueado" as const) : ("Ativo" as const),
             }
           : user
       ),
@@ -467,3 +467,4 @@ export default function AdminConfiguracoesPage() {
     </div>
   );
 }
+
