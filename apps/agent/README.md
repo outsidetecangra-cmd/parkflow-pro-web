@@ -1,4 +1,4 @@
-# Local Agent
+﻿# Local Agent
 
 Base do agente local do Parkflow Pro.
 
@@ -14,3 +14,4 @@ Base do agente local do Parkflow Pro.
 - runtime em Node.js
 - storage local em JSON
 - sincronizacao por batch
+

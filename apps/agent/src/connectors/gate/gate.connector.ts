@@ -1,1 +1,2 @@
-export class GateConnector {}
+﻿export class GateConnector {}
+

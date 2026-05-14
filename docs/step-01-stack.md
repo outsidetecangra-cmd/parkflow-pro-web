@@ -1,4 +1,4 @@
-# Passo 1 - Stack Base
+﻿# Passo 1 - Stack Base
 
 Stack aprovada:
 
@@ -6,14 +6,15 @@ Stack aprovada:
 - API central: `NestJS` ou `Next.js API`
 - Banco principal: `PostgreSQL`
 
-Decisão recomendada:
+DecisÃ£o recomendada:
 
 - `NestJS` para a API central
 
 Motivo:
 
-- domínio grande
-- múltiplos módulos
-- sincronização com agente local
+- domÃ­nio grande
+- mÃºltiplos mÃ³dulos
+- sincronizaÃ§Ã£o com agente local
 - regras transacionais
-- crescimento melhor organizado por módulos
+- crescimento melhor organizado por mÃ³dulos
+

@@ -1,4 +1,4 @@
-import { paymentMethods } from "@/lib/mock-data";
+﻿import { paymentMethods } from "@/lib/mock-data";
 import { currency } from "@/lib/utils";
 import { Panel } from "@/components/ui/panel";
 
@@ -20,3 +20,4 @@ export function CashSummary() {
     </Panel>
   );
 }
+

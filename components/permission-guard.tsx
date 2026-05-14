@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+﻿import { ReactNode } from "react";
 
 export function PermissionGuard({
   permission,
@@ -13,3 +13,4 @@ export function PermissionGuard({
     </div>
   );
 }
+

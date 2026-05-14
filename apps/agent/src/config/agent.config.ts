@@ -1,4 +1,4 @@
-import path from "path";
+﻿import path from "path";
 
 export type AgentConfig = {
   apiBaseUrl: string;
@@ -15,7 +15,7 @@ export function loadAgentConfig(): AgentConfig {
     apiBaseUrl: process.env.AGENT_API_BASE_URL ?? "http://localhost:3001/api",
     unitCode: process.env.AGENT_UNIT_CODE ?? "ATL",
     deviceName: process.env.AGENT_DEVICE_NAME ?? "agent-atl-01",
-    agentKey: process.env.AGENT_KEY ?? "agent-secret",
+    agentKey: process.env.AGENT_KEY ?? "troque-este-segredo",
     storageFile:
       process.env.AGENT_STORAGE_FILE ??
       path.resolve(process.cwd(), "apps", "agent", "agent-storage.json"),
@@ -23,3 +23,4 @@ export function loadAgentConfig(): AgentConfig {
     syncIntervalMs: Number(process.env.AGENT_SYNC_MS ?? 10000)
   };
 }
+

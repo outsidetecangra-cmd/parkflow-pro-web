@@ -1,4 +1,4 @@
-import { AgentConfig } from "../config/agent.config";
+﻿import { AgentConfig } from "../config/agent.config";
 import { LocalDeviceState, LocalQueuedEvent } from "../types/agent.types";
 
 export class AgentApiClient {
@@ -61,3 +61,4 @@ export class AgentApiClient {
     return response.json();
   }
 }
+

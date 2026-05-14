@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,8 +7,8 @@ import { loginRequest, saveSession } from "@/lib/api";
 
 export function LoginForm() {
   const router = useRouter();
-  const [login, setLogin] = useState("admin@parkflow.pro");
-  const [password, setPassword] = useState("admin123");
+  const [login, setLogin] = useState("admin.demo@example.invalid");
+  const [password, setPassword] = useState("troque-esta-senha");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -70,3 +70,4 @@ export function LoginForm() {
     </Panel>
   );
 }
+

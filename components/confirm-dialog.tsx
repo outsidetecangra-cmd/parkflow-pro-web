@@ -1,4 +1,4 @@
-export function ConfirmDialog({
+﻿export function ConfirmDialog({
   title,
   description,
   confirmLabel = "Confirmar",
@@ -31,3 +31,4 @@ export function ConfirmDialog({
     </div>
   );
 }
+

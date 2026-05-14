@@ -1,4 +1,4 @@
-export function FilterBar() {
+﻿export function FilterBar() {
   const filters = ["Hoje", "Ontem", "Semana", "Mes", "Periodo personalizado", "Unidade", "Patio", "Operador"];
 
   return (
@@ -14,3 +14,4 @@ export function FilterBar() {
     </div>
   );
 }
+

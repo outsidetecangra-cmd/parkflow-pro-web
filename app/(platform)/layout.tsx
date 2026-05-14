@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar";
+﻿import { AppSidebar } from "@/components/app-sidebar";
 import { Topbar } from "@/components/topbar";
 import { ReactNode } from "react";
 
@@ -13,3 +13,4 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
+

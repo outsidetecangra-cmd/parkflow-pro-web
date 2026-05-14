@@ -1,4 +1,4 @@
-import { loadAgentConfig } from "./config/agent.config";
+﻿import { loadAgentConfig } from "./config/agent.config";
 import { AgentRuntime } from "./runtime/agent-runtime";
 
 async function main() {
@@ -12,3 +12,4 @@ main().catch((error) => {
   console.error("[agent] startup failure", error);
   process.exit(1);
 });
+

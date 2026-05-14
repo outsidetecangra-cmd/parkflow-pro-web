@@ -1,4 +1,4 @@
-# Passo 09: Integracao Frontend com API Real
+﻿# Passo 09: Integracao Frontend com API Real
 
 ## Objetivo
 
@@ -78,3 +78,4 @@ Fechar a validacao do frontend e depois escolher uma destas trilhas:
 1. Criar endpoint real de dashboard na API.
 2. Integrar relatorios e mensalistas ao backend real.
 3. Amarrar o frontend ao fluxo do agente local e status de dispositivos em tempo real.
+

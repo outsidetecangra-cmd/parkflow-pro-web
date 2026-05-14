@@ -1,27 +1,27 @@
--- RASCUNHO DE RLS POR UNIDADE
--- N√O APLICAR EM PRODU«√O SEM TESTAR ANTES.
+Ôªø-- RASCUNHO DE RLS POR UNIDADE
+-- N√ÉO APLICAR EM PRODU√á√ÉO SEM TESTAR ANTES.
 --
--- EstratÈgia:
+-- Estrat√©gia:
 -- A API deve informar ao PostgreSQL a unidade atual usando:
 -- SET LOCAL app.current_unit_id = 'ID_DA_UNIDADE';
 --
--- As tabelas com "unitId" sÛ poder„o acessar linhas da unidade atual.
+-- As tabelas com "unitId" s√≥ poder√£o acessar linhas da unidade atual.
 
--- Exemplo de uso seguro dentro de transaÁ„o:
+-- Exemplo de uso seguro dentro de transa√ß√£o:
 -- BEGIN;
 -- SELECT set_config('app.current_unit_id', 'ID_DA_UNIDADE', true);
 -- SELECT * FROM "Ticket";
 -- COMMIT;
 
 -- =========================================================
--- ATEN«√O IMPORTANTE
+-- ATEN√á√ÉO IMPORTANTE
 -- =========================================================
 -- Se o DATABASE_URL usa o dono das tabelas, o RLS pode ser ignorado.
--- O ideal È criar um usu·rio de banco especÌfico para a API,
--- sem ser owner das tabelas, e usar esse usu·rio no DATABASE_URL.
+-- O ideal √© criar um usu√°rio de banco espec√≠fico para a API,
+-- sem ser owner das tabelas, e usar esse usu√°rio no DATABASE_URL.
 
 -- =========================================================
--- POLÕTICAS BASEADAS EM unitId
+-- POL√çTICAS BASEADAS EM unitId
 -- =========================================================
 
 ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
@@ -133,3 +133,4 @@ ALTER TABLE "Incident" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "unit_isolation_incident" ON "Incident"
   USING ("unitId" = current_setting('app.current_unit_id', true))
   WITH CHECK ("unitId" = current_setting('app.current_unit_id', true));
+

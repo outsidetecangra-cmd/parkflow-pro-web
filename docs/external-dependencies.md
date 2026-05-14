@@ -1,44 +1,45 @@
-# Pendencias Externas
+﻿# Pendencias Externas
 
-Itens que dependem de definição, fornecedor ou ambiente fora do código:
+Itens que dependem de definiÃ§Ã£o, fornecedor ou ambiente fora do cÃ³digo:
 
 ## Infra
 
 - provisionar PostgreSQL
 - definir hospedagem do web
 - definir hospedagem da API
-- definir estratégia de filas, se necessário
+- definir estratÃ©gia de filas, se necessÃ¡rio
 
-## Segurança
+## SeguranÃ§a
 
-- estratégia de autenticação final
-- política de rotação de credenciais do agente
+- estratÃ©gia de autenticaÃ§Ã£o final
+- polÃ­tica de rotaÃ§Ã£o de credenciais do agente
 - armazenamento seguro de segredos
 
 ## Hardware
 
 - fabricantes e modelos de cancela
-- câmeras IP suportadas
+- cÃ¢meras IP suportadas
 - motor OCR/LPR real ou terceirizado
-- impressoras térmicas suportadas
+- impressoras tÃ©rmicas suportadas
 - terminais de pagamento suportados
-- totem e periféricos
+- totem e perifÃ©ricos
 
 ## Fiscal e Pagamentos
 
-- provedor de NFSe/RPS por município
+- provedor de NFSe/RPS por municÃ­pio
 - gateway/adquirente
 - Pix
-- TEF ou integração de terminal
+- TEF ou integraÃ§Ã£o de terminal
 
-## Operação Offline
+## OperaÃ§Ã£o Offline
 
 - banco local do agente
-- política de retenção offline
-- resolução de conflito na sincronização
+- polÃ­tica de retenÃ§Ã£o offline
+- resoluÃ§Ã£o de conflito na sincronizaÃ§Ã£o
 
-## Decisões em aberto
+## DecisÃµes em aberto
 
 - API central em `NestJS` ou `Next.js API`
 - tecnologia do agente local: `Node.js`, `Electron`, `Windows Service` ou outro empacotamento
 - protocolo de eventos em tempo real: `polling`, `websocket` ou fila
+

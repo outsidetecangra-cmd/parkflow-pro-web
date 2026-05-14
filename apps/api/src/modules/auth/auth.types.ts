@@ -1,4 +1,4 @@
-export type LoginBody = {
+﻿export type LoginBody = {
   login?: string;
   password?: string;
 };
@@ -8,3 +8,4 @@ export type AgentLoginBody = {
   unitCode?: string;
   deviceName?: string;
 };
+

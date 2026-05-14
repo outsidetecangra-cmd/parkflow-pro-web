@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from "@nestjs/common";
+﻿import { Body, Controller, Post } from "@nestjs/common";
 import { OperationsService } from "./operations.service";
 import { EntryBody, ExitCalculateBody, ExitConfirmBody } from "./operations.types";
 
@@ -21,3 +21,4 @@ export class OperationsController {
     return this.operationsService.confirmExit(body);
   }
 }
+

@@ -1,4 +1,4 @@
-import {
+﻿import {
   AuditOccurrence,
   DashboardStat,
   Device,
@@ -29,7 +29,7 @@ export const units: UnitSummary[] = [
 export const tickets: TicketView[] = [
   {
     id: "TK-20260513-001",
-    plate: "BRA2E19",
+    plate: "DEMO001",
     model: "Jeep Compass",
     color: "Preto",
     customer: "Marina Costa",
@@ -128,7 +128,7 @@ export const eventLogs: EventLog[] = [
   {
     id: "ev-1",
     title: "Placa lida com sucesso",
-    detail: "BRA2E19 detectada na Entrada Norte 01 com confianca de 97,8%",
+    detail: "DEMO001 detectada na Entrada Norte 01 com confianca de 97,8%",
     level: "success",
     timestamp: "2026-05-13T12:41:00-03:00"
   },
@@ -151,7 +151,7 @@ export const eventLogs: EventLog[] = [
 export const lprCaptures: LprCapture[] = [
   {
     id: "lpr-01",
-    plate: "BRA2E19",
+    plate: "DEMO001",
     confidence: 97.8,
     camera: "Entrada Norte 01",
     direction: "entrada",
@@ -209,7 +209,7 @@ export const valetQueue: ValetRequest[] = [
   {
     id: "val-02",
     customer: "Helena Braga",
-    plate: "ZXT1A90",
+    plate: "DEMO006",
     status: "Pronto para retirada",
     eta: "01 min",
     attendant: "Rafael",
@@ -383,3 +383,5 @@ export const genericRoutes: Record<string, RouteConfig> = {
 };
 
 export const routeLabels = Object.keys(genericRoutes);
+
+

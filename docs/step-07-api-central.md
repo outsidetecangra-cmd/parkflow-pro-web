@@ -1,10 +1,10 @@
-# Passo 7 - API Central
+﻿# Passo 7 - API Central
 
 Objetivo deste passo:
 
 - preparar a base da `API Central`
 - alinhar a estrutura com os contratos do passo 4
-- encaixar a API no repositório sem quebrar o web atual
+- encaixar a API no repositÃ³rio sem quebrar o web atual
 
 ## Decisao
 
@@ -74,3 +74,4 @@ Isso evita mover tudo cedo demais.
   - `GET /me/context`
   - `GET /tickets/search`
   - `POST /operations/entry`
+

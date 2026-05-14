@@ -1,4 +1,4 @@
-# API Central
+﻿# API Central
 
 Base da API central do Parkflow Pro.
 
@@ -15,4 +15,5 @@ Servir:
 
 ## Observacao
 
-O schema Prisma continua na raiz do repositório em `prisma/schema.prisma`.
+O schema Prisma continua na raiz do repositÃ³rio em `prisma/schema.prisma`.
+

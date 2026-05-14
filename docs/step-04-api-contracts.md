@@ -1,4 +1,4 @@
-# Passo 4 - Contratos Iniciais de API e Sincronizacao
+﻿# Passo 4 - Contratos Iniciais de API e Sincronizacao
 
 Objetivo deste passo:
 
@@ -55,7 +55,7 @@ Request:
 
 ```json
 {
-  "login": "admin@parkflow.pro",
+  "login": "admin.demo@example.invalid",
   "password": "******"
 }
 ```
@@ -88,7 +88,7 @@ Request:
 
 ```json
 {
-  "agentKey": "agent-secret",
+  "agentKey": "troque-este-segredo",
   "unitCode": "ATL",
   "deviceName": "agent-atl-01"
 }
@@ -168,7 +168,7 @@ Response:
       "code": "TK-20260513-001",
       "status": "OPEN",
       "type": "AVULSO",
-      "plate": "BRA2E19",
+      "plate": "DEMO001",
       "vehicleModel": "Jeep Compass",
       "customerName": "Marina Costa",
       "entryAt": "2026-05-13T09:15:00-03:00",
@@ -197,7 +197,7 @@ Request:
 {
   "unitId": "unit_01",
   "origin": "WEB",
-  "plate": "BRA2E19",
+  "plate": "DEMO001",
   "vehicleModel": "Jeep Compass",
   "vehicleColor": "Preto",
   "customerType": "AVULSO",
@@ -207,7 +207,7 @@ Request:
   "terminalId": "term_01",
   "cameraId": "cam_01",
   "lpr": {
-    "plate": "BRA2E19",
+    "plate": "DEMO001",
     "confidence": 97.8
   },
   "notes": "Entrada registrada com OCR"
@@ -414,7 +414,7 @@ Request:
       "occurredAt": "2026-05-13T09:15:00-03:00",
       "payload": {
         "ticketCode": "TK-20260513-001",
-        "plate": "BRA2E19"
+        "plate": "DEMO001"
       }
     },
     {
@@ -422,7 +422,7 @@ Request:
       "eventType": "LPR_CAPTURED",
       "occurredAt": "2026-05-13T09:15:10-03:00",
       "payload": {
-        "plate": "BRA2E19",
+        "plate": "DEMO001",
         "confidence": 97.8
       }
     }
@@ -537,3 +537,4 @@ Quando a operacao estiver estavel, podemos avaliar:
 - websocket para eventos em tempo real
 - fila dedicada
 - comandos remotos assinos
+

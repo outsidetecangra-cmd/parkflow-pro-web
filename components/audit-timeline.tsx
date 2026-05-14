@@ -1,4 +1,4 @@
-import { auditOccurrences } from "@/lib/mock-data";
+﻿import { auditOccurrences } from "@/lib/mock-data";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/status-badge";
 
@@ -12,7 +12,7 @@ export function AuditTimeline() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="font-medium">{occurrence.type}</p>
-                <p className="text-sm text-slate-500">{occurrence.plate} • {occurrence.ticket}</p>
+                <p className="text-sm text-slate-500">{occurrence.plate} â€¢ {occurrence.ticket}</p>
               </div>
               <StatusBadge label={occurrence.status} tone={occurrence.severity === "alta" ? "danger" : "warning"} />
             </div>
@@ -23,3 +23,4 @@ export function AuditTimeline() {
     </Panel>
   );
 }
+

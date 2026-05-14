@@ -1,4 +1,4 @@
-export type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
+﻿export type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
 
 export type DashboardStat = {
   label: string;
@@ -128,3 +128,4 @@ export type RouteConfig = {
     rows: string[][];
   };
 };
+

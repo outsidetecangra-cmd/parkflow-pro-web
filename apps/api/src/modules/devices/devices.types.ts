@@ -1,4 +1,4 @@
-export type DeviceStatusBody = {
+﻿export type DeviceStatusBody = {
   agentId?: string;
   unitId?: string;
   sentAt?: string;
@@ -9,3 +9,4 @@ export type DeviceStatusBody = {
     lastSignalAt?: string;
   }>;
 };
+

@@ -1,4 +1,4 @@
-import { Controller, Get, Headers } from "@nestjs/common";
+﻿import { Controller, Get, Headers } from "@nestjs/common";
 import { UsersService } from "./users.service";
 
 @Controller("me")
@@ -10,3 +10,4 @@ export class UsersController {
     return this.usersService.getContext(authorization);
   }
 }
+

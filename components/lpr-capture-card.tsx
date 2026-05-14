@@ -1,4 +1,4 @@
-import { LprCapture } from "@/lib/types";
+﻿import { LprCapture } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/status-badge";
@@ -21,3 +21,4 @@ export function LprCaptureCard({ capture }: { capture: LprCapture }) {
     </Panel>
   );
 }
+

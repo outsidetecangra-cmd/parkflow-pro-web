@@ -1,4 +1,4 @@
-import { Panel } from "@/components/ui/panel";
+﻿import { Panel } from "@/components/ui/panel";
 
 export function CameraPreview({
   title,
@@ -17,3 +17,4 @@ export function CameraPreview({
     </Panel>
   );
 }
+

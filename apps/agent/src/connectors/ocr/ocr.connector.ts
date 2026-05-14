@@ -1,4 +1,4 @@
-import { AgentConnector, LocalQueuedEvent } from "../../types/agent.types";
+﻿import { AgentConnector, LocalQueuedEvent } from "../../types/agent.types";
 
 export class OcrConnector implements AgentConnector {
   connectorName = "ocr";
@@ -10,10 +10,11 @@ export class OcrConnector implements AgentConnector {
       eventType: "OCR_READ",
       occurredAt: new Date().toISOString(),
       payload: {
-        plate: "BRA2E19",
-        rawText: "BRA2E19",
+        plate: "DEMO001",
+        rawText: "DEMO001",
         confidence: 95.1
       }
     };
   }
 }
+

@@ -1,5 +1,15 @@
-import { PrismaClient, TicketStatus, UserStatus } from "@prisma/client";
+﻿import { PrismaClient, TicketStatus, UserStatus } from "@prisma/client";
 import { createHash } from "crypto";
+
+function getRequiredSeedEnv(name: string): string {
+  const value = process.env[name];
+
+  if (!value) {
+    throw new Error(`Variável de ambiente obrigatória ausente: ${name}`);
+  }
+
+  return value;
+}
 
 const prisma = new PrismaClient();
 
@@ -52,19 +62,19 @@ async function main() {
   const [atlUnit, aenUnit, arcUnit] = units;
 
   const user = await prisma.user.upsert({
-    where: { email: "admin@parkflow.pro" },
+    where: { email: "admin.demo@example.invalid" },
     update: {
       username: "admin",
-      passwordHash: createSeedHash("admin123"),
+      passwordHash: createSeedHash(getRequiredSeedEnv("SEED_ADMIN_PASSWORD")),
       name: "Admin Demo",
       status: UserStatus.ACTIVE,
       roleId: adminRole.id,
       unitId: atlUnit.id
     },
     create: {
-      email: "admin@parkflow.pro",
+      email: "admin.demo@example.invalid",
       username: "admin",
-      passwordHash: createSeedHash("admin123"),
+      passwordHash: createSeedHash(getRequiredSeedEnv("SEED_ADMIN_PASSWORD")),
       name: "Admin Demo",
       status: UserStatus.ACTIVE,
       roleId: adminRole.id,
@@ -138,28 +148,28 @@ async function main() {
         where: { id: existingCustomer.id },
         data: {
           name: "Marina Costa",
-          document: "12345678900",
-          phone: "11999990000"
+          document: "00000000000",
+          phone: "00000000000"
         }
       })
     : await prisma.customer.create({
         data: {
           name: "Marina Costa",
-          document: "12345678900",
+          document: "00000000000",
           email: "marina@example.com",
-          phone: "11999990000"
+          phone: "00000000000"
         }
       });
 
   const vehicle = await prisma.vehicle.upsert({
-    where: { plate: "BRA2E19" },
+    where: { plate: "DEMO001" },
     update: {
       model: "Jeep Compass",
       color: "Preto",
       customerId: customer.id
     },
     create: {
-      plate: "BRA2E19",
+      plate: "DEMO001",
       model: "Jeep Compass",
       color: "Preto",
       customerId: customer.id
@@ -258,14 +268,14 @@ async function main() {
       ticketId: ticket.id,
       userId: user.id,
       type: "ENTRY_REGISTERED",
-      payload: { gate: "Entrada Norte 01", ocr: "BRA2E19", origin: "WEB" }
+      payload: { gate: "Entrada Norte 01", ocr: "DEMO001", origin: "WEB" }
     },
     create: {
       id: "mov-demo-entry-01",
       ticketId: ticket.id,
       userId: user.id,
       type: "ENTRY_REGISTERED",
-      payload: { gate: "Entrada Norte 01", ocr: "BRA2E19", origin: "WEB" }
+      payload: { gate: "Entrada Norte 01", ocr: "DEMO001", origin: "WEB" }
     }
   });
 
@@ -302,7 +312,7 @@ async function main() {
       ticketId: ticket.id,
       cameraId: camera.id,
       unitId: atlUnit.id,
-      plate: "BRA2E19",
+      plate: "DEMO001",
       confidence: 97.8,
       direction: "entrada",
       status: "validado",
@@ -313,7 +323,7 @@ async function main() {
       ticketId: ticket.id,
       cameraId: camera.id,
       unitId: atlUnit.id,
-      plate: "BRA2E19",
+      plate: "DEMO001",
       confidence: 97.8,
       direction: "entrada",
       status: "validado",
@@ -329,7 +339,7 @@ async function main() {
       }
     },
     update: {
-      agentKeyHash: createSeedHash("agent-secret"),
+      agentKeyHash: createSeedHash(getRequiredSeedEnv("SEED_AGENT_SECRET")),
       status: "online",
       version: "0.1.0",
       lastSeenAt: new Date("2026-05-13T12:50:00-03:00")
@@ -337,7 +347,7 @@ async function main() {
     create: {
       unitId: atlUnit.id,
       name: "agent-atl-01",
-      agentKeyHash: createSeedHash("agent-secret"),
+      agentKeyHash: createSeedHash(getRequiredSeedEnv("SEED_AGENT_SECRET")),
       status: "online",
       version: "0.1.0",
       lastSeenAt: new Date("2026-05-13T12:50:00-03:00")
@@ -406,7 +416,7 @@ async function main() {
       occurredAt: new Date("2026-05-13T12:39:41-03:00"),
       payload: {
         ticketCode: "TK-20260513-001",
-        plate: "BRA2E19",
+        plate: "DEMO001",
         confidence: 97.8
       },
       processingStatus: "processed",
@@ -421,7 +431,7 @@ async function main() {
       occurredAt: new Date("2026-05-13T12:39:41-03:00"),
       payload: {
         ticketCode: "TK-20260513-001",
-        plate: "BRA2E19",
+        plate: "DEMO001",
         confidence: 97.8
       },
       processingStatus: "processed",
@@ -486,3 +496,6 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+
+

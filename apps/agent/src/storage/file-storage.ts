@@ -1,4 +1,4 @@
-import fs from "fs";
+﻿import fs from "fs";
 import path from "path";
 import { LocalStorageState } from "../types/agent.types";
 
@@ -39,3 +39,4 @@ export class FileStorage {
     return next;
   }
 }
+

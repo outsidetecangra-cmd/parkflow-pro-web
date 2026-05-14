@@ -1,4 +1,4 @@
-# Checklist de producao (deploy)
+﻿# Checklist de producao (deploy)
 
 ## 1) Banco de dados
 
@@ -24,4 +24,5 @@
 - Garantir que `.env` nao seja versionado (usar `.env.example` como referencia).
 - Habilitar logs e monitoramento (Sentry/Logtail/etc.) quando for ambiente real.
 - Configurar HTTPS, rate limiting e WAF/regras basicas no provedor (quando aplicavel).
+
 

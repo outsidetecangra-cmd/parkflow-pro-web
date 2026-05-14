@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { AuditTimeline } from "@/components/audit-timeline";
@@ -79,3 +79,4 @@ export function DashboardClient() {
     </div>
   );
 }
+

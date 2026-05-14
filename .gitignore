@@ -1,4 +1,4 @@
-node_modules/
+﻿node_modules/
 .next/
 out/
 .env
@@ -9,3 +9,6 @@ out/
 *.log
 
 apps/api/dist/
+
+
+**/dist/

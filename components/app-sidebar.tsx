@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import type { Route } from "next";
 import { LayoutDashboard, CarFront, Wallet, Users, Building2, Radar, FileBarChart2, Settings } from "lucide-react";
 
@@ -45,3 +45,4 @@ export function AppSidebar() {
     </aside>
   );
 }
+

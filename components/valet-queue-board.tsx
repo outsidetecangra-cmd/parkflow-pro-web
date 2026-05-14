@@ -1,4 +1,4 @@
-import { valetQueue } from "@/lib/mock-data";
+﻿import { valetQueue } from "@/lib/mock-data";
 import { Panel } from "@/components/ui/panel";
 
 export function ValetQueueBoard() {
@@ -11,7 +11,7 @@ export function ValetQueueBoard() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="font-medium">{request.customer}</p>
-                <p className="text-sm text-slate-500">{request.plate} • {request.attendant}</p>
+                <p className="text-sm text-slate-500">{request.plate} â€¢ {request.attendant}</p>
               </div>
               <div className="text-right">
                 <p className="font-semibold">{request.eta}</p>
@@ -24,3 +24,4 @@ export function ValetQueueBoard() {
     </Panel>
   );
 }
+

@@ -1,17 +1,17 @@
-# Roadmap de Execucao
+﻿# Roadmap de Execucao
 
-Ordem sugerida de implementação:
+Ordem sugerida de implementaÃ§Ã£o:
 
 1. consolidar a base `web`
 2. estruturar o monorepo alvo
 3. definir contratos entre `web`, `api` e `agent`
-4. modelar domínio central no banco
+4. modelar domÃ­nio central no banco
 5. construir `apps/api`
 6. estabilizar fluxo de entrada
-7. estabilizar fluxo de saída
-8. criar sincronização com agente
+7. estabilizar fluxo de saÃ­da
+8. criar sincronizaÃ§Ã£o com agente
 9. implementar modo offline
-10. expandir ERP, fiscal e relatórios
+10. expandir ERP, fiscal e relatÃ³rios
 
 ## Fase 1 - Web
 
@@ -19,11 +19,11 @@ Ordem sugerida de implementação:
 - login
 - dashboard
 - entrada
-- saída
+- saÃ­da
 
 ## Fase 2 - API
 
-- autenticação
+- autenticaÃ§Ã£o
 - RBAC
 - unidades
 - tickets
@@ -33,14 +33,15 @@ Ordem sugerida de implementação:
 
 - runtime local
 - storage local
-- sincronização
+- sincronizaÃ§Ã£o
 - conectores por equipamento
 
-## Fase 4 - Expansão
+## Fase 4 - ExpansÃ£o
 
 - fiscal
 - mensalistas
-- convênios
+- convÃªnios
 - auditoria
 - valet
 - ERP
+

@@ -1,4 +1,4 @@
-import { StatusTone } from "@/lib/types";
+﻿import { StatusTone } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const tones: Record<StatusTone, string> = {
@@ -22,3 +22,4 @@ export function StatusBadge({
     </span>
   );
 }
+

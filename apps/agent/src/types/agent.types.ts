@@ -1,4 +1,4 @@
-export type LocalAgentSession = {
+﻿export type LocalAgentSession = {
   accessToken: string | null;
   agentId: string | null;
   unitId: string | null;
@@ -30,3 +30,4 @@ export type AgentConnector = {
   connectorName: string;
   emitDemoEvent?: () => Promise<LocalQueuedEvent | null>;
 };
+

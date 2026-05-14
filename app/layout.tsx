@@ -1,4 +1,4 @@
-import "@/app/globals.css";
+﻿import "@/app/globals.css";
 import { IBM_Plex_Sans, Manrope } from "next/font/google";
 import { ReactNode } from "react";
 
@@ -21,3 +21,4 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
+

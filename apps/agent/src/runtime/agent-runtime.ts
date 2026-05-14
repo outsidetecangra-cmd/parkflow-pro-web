@@ -1,4 +1,4 @@
-import { AgentConfig } from "../config/agent.config";
+﻿import { AgentConfig } from "../config/agent.config";
 import { CameraConnector } from "../connectors/camera/camera.connector";
 import { OcrConnector } from "../connectors/ocr/ocr.connector";
 import { FileStorage } from "../storage/file-storage";
@@ -65,3 +65,4 @@ export class AgentRuntime {
     }
   }
 }
+

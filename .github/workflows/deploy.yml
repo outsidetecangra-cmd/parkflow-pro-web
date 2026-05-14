@@ -1,4 +1,4 @@
-name: Deploy Next.js para GitHub Pages
+ï»¿name: Deploy Next.js para GitHub Pages
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar repositório
+      - name: Baixar repositÃ³rio
         uses: actions/checkout@v4
 
       - name: Configurar Node
@@ -28,10 +28,10 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Instalar dependências
+      - name: Instalar dependÃªncias
         run: npm ci
 
-      - name: Gerar build estático
+      - name: Gerar build estÃ¡tico
         run: npm run build
         env:
           GITHUB_PAGES: "true"
@@ -56,3 +56,4 @@ jobs:
       - name: Publicar
         id: deployment
         uses: actions/deploy-pages@v4
+

@@ -1,4 +1,4 @@
-export type AgentEventBody = {
+﻿export type AgentEventBody = {
   eventId?: string;
   unitId?: string;
   agentId?: string;
@@ -21,3 +21,4 @@ export type SyncBatchBody = {
     payload?: Record<string, unknown>;
   }>;
 };
+

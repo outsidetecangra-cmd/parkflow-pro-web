@@ -1,4 +1,4 @@
-# Passo 3 - Comunicação Entre os Blocos
+﻿# Passo 3 - ComunicaÃ§Ã£o Entre os Blocos
 
 Fluxo principal:
 
@@ -9,17 +9,17 @@ Fluxo principal:
 
 ## Web -> API
 
-Usar `HTTPS` com autenticação por sessão ou token.
+Usar `HTTPS` com autenticaÃ§Ã£o por sessÃ£o ou token.
 
 Casos principais:
 
 - login
 - consulta de dashboard
-- operação de entrada e saída
+- operaÃ§Ã£o de entrada e saÃ­da
 - caixa
 - mensalistas
-- relatórios
-- administração
+- relatÃ³rios
+- administraÃ§Ã£o
 
 ## Agent -> API
 
@@ -30,7 +30,7 @@ Casos principais:
 - sincronizar eventos locais
 - receber comandos remotos
 - publicar status de dispositivos
-- baixar configurações
+- baixar configuraÃ§Ãµes
 
 ## Agent -> Hardware Local
 
@@ -39,7 +39,7 @@ O agente encapsula drivers e protocolos locais.
 Conectores previstos:
 
 - cancela
-- câmera IP
+- cÃ¢mera IP
 - OCR/LPR
 - impressora
 - totem
@@ -49,10 +49,10 @@ Conectores previstos:
 
 Quando a internet cair:
 
-- o agente continua registrando entrada, saída e eventos
+- o agente continua registrando entrada, saÃ­da e eventos
 - os dados ficam em fila local
 - cada evento recebe `id`, `timestamp`, `unitId`, `deviceId` e `syncStatus`
-- ao retornar a conexão, o agente reenvia em ordem
+- ao retornar a conexÃ£o, o agente reenvia em ordem
 
 ## Regra importante
 
@@ -63,4 +63,5 @@ Sempre:
 - hardware -> agente local
 - agente local -> API central
 
-Isso simplifica segurança, padronização e operação offline.
+Isso simplifica seguranÃ§a, padronizaÃ§Ã£o e operaÃ§Ã£o offline.
+

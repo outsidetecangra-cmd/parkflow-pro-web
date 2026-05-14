@@ -1,4 +1,4 @@
--- CreateEnum
+﻿-- CreateEnum
 CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'BLOCKED');
 
 -- CreateEnum
@@ -873,3 +873,4 @@ ALTER TABLE "Payable" ADD CONSTRAINT "Payable_unitId_fkey" FOREIGN KEY ("unitId"
 
 -- AddForeignKey
 ALTER TABLE "Incident" ADD CONSTRAINT "Incident_unitId_fkey" FOREIGN KEY ("unitId") REFERENCES "Unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+

@@ -1,4 +1,4 @@
-export type EntryBody = {
+﻿export type EntryBody = {
   unitId?: string;
   origin?: string;
   plate?: string;
@@ -46,3 +46,4 @@ export type ExitConfirmBody = {
   };
   gateId?: string;
 };
+

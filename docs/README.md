@@ -1,6 +1,6 @@
-# Plano de Execucao
+﻿# Plano de Execucao
 
-Este diretório guarda as decisões e os passos do projeto para que a implementação avance sem perder contexto.
+Este diretÃ³rio guarda as decisÃµes e os passos do projeto para que a implementaÃ§Ã£o avance sem perder contexto.
 
 ## Ordem de leitura
 
@@ -21,4 +21,5 @@ Este diretório guarda as decisões e os passos do projeto para que a implementa
 
 - Cada passo aprovado vira documento.
 - O que depender de terceiros fica listado em pendencias externas.
-- O que já existe no repositório é reaproveitado sempre que fizer sentido.
+- O que jÃ¡ existe no repositÃ³rio Ã© reaproveitado sempre que fizer sentido.
+

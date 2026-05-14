@@ -1,4 +1,4 @@
-# Handoff Atual
+﻿# Handoff Atual
 
 ## Estado do sistema
 
@@ -50,6 +50,7 @@ npm run dev
 
 ## Credenciais atuais
 
-- Web/API: `admin@parkflow.pro` / `admin123`
-- Agente: `ATL` / `agent-atl-01` / `agent-secret`
+- Web/API: `admin.demo@example.invalid` / `troque-esta-senha`
+- Agente: `ATL` / `agent-atl-01` / `troque-este-segredo`
 - PostgreSQL: `postgres` / `postgres`
+

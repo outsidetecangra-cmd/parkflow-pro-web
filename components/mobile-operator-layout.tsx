@@ -1,4 +1,4 @@
-import { Panel } from "@/components/ui/panel";
+﻿import { Panel } from "@/components/ui/panel";
 
 export function MobileOperatorLayout() {
   return (
@@ -13,3 +13,4 @@ export function MobileOperatorLayout() {
     </Panel>
   );
 }
+

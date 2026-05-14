@@ -1,4 +1,4 @@
-# Passo 5 - Modelo de Dominio Inicial
+﻿# Passo 5 - Modelo de Dominio Inicial
 
 Objetivo deste passo:
 
@@ -345,3 +345,4 @@ Antes de expandir funcionalidades, o schema Prisma deve ser revisado para:
 2. incluir o agente local
 3. incluir sincronizacao offline
 4. manter o restante simplificado
+

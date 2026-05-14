@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { CameraPreview } from "@/components/camera-preview";
@@ -219,3 +219,4 @@ export function EntryOperationsClient() {
     </div>
   );
 }
+

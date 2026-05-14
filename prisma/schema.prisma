@@ -1,4 +1,4 @@
-generator client {
+﻿generator client {
   provider = "prisma-client-js"
 }
 
@@ -627,3 +627,4 @@ model Incident {
   createdAt   DateTime @default(now())
   unit        Unit?    @relation(fields: [unitId], references: [id])
 }
+

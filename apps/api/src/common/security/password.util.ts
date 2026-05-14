@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from "crypto";
+﻿import { createHash, timingSafeEqual } from "crypto";
 
 function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
@@ -22,3 +22,4 @@ export function verifyPassword(value: string, storedHash: string) {
 
   return false;
 }
+

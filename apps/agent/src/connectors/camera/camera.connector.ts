@@ -1,4 +1,4 @@
-import { AgentConnector, LocalQueuedEvent } from "../../types/agent.types";
+﻿import { AgentConnector, LocalQueuedEvent } from "../../types/agent.types";
 
 export class CameraConnector implements AgentConnector {
   connectorName = "camera";
@@ -10,10 +10,11 @@ export class CameraConnector implements AgentConnector {
       eventType: "LPR_CAPTURED",
       occurredAt: new Date().toISOString(),
       payload: {
-        plate: "BRA2E19",
+        plate: "DEMO001",
         confidence: 97.8,
         imageUrl: "local://camera/capture-demo.jpg"
       }
     };
   }
 }
+

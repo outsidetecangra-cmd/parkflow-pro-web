@@ -1,4 +1,4 @@
-import { TicketView } from "@/lib/types";
+﻿import { TicketView } from "@/lib/types";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/status-badge";
 
@@ -34,3 +34,4 @@ export function VehicleCard({ ticket }: { ticket: TicketView }) {
     </Panel>
   );
 }
+

@@ -1,4 +1,4 @@
-import { DashboardStat } from "@/lib/types";
+﻿import { DashboardStat } from "@/lib/types";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/status-badge";
 
@@ -16,3 +16,4 @@ export function StatCard({ stat }: { stat: DashboardStat }) {
     </Panel>
   );
 }
+

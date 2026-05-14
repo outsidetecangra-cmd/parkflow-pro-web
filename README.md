@@ -1,4 +1,4 @@
-# Parkflow Pro
+﻿# Parkflow Pro
 
 Demo SaaS para gestao de estacionamentos com foco em operacao, caixa, OCR/LPR, autoatendimento, auditoria, valet, ERP e fiscal.
 
@@ -110,12 +110,12 @@ npm run agent:dev
 ## Credenciais demo
 
 - Web:
-  - login: `admin@parkflow.pro`
-  - senha: `admin123`
+  - login: `admin.demo@example.invalid`
+  - senha: `troque-esta-senha`
 - Agente local:
   - `unitCode`: `ATL`
   - `deviceName`: `agent-atl-01`
-  - `agentKey`: `agent-secret`
+  - `agentKey`: `troque-este-segredo`
 
 ## Status atual da execucao
 
@@ -150,3 +150,4 @@ Sem isso:
 
 - Integracoes externas foram mantidas como simulacoes estruturadas.
 - O seed Prisma cobre a base central da demo; os mocks de interface cobrem o restante da massa demonstrativa.
+

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+﻿import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../prisma/prisma.service";
 import { decodeToken, getBearerToken } from "../../common/security/token.util";
@@ -124,3 +124,4 @@ export class UsersService {
     };
   }
 }
+

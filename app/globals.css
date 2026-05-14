@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -48,3 +48,4 @@ body {
 .surface {
   @apply border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-glow;
 }
+

@@ -1,4 +1,4 @@
-import { TicketView } from "@/lib/types";
+﻿import { TicketView } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001/api";
 const STORAGE_KEY = "parkflow.session";
@@ -316,3 +316,4 @@ export function toTicketView(input: {
             : "Finalizado"
   };
 }
+

@@ -1,4 +1,4 @@
-# Passo 6 - Refactor Planejado do Prisma
+﻿# Passo 6 - Refactor Planejado do Prisma
 
 Objetivo deste passo:
 
@@ -388,3 +388,4 @@ A meta da primeira revisao deve ser:
 2. operacao com `unitId` direto
 3. agente local representado
 4. sincronizacao offline registrada
+

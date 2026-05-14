@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+﻿import { Module } from "@nestjs/common";
 import { DevicesController } from "./devices.controller";
 import { DevicesService } from "./devices.service";
 
@@ -8,3 +8,4 @@ import { DevicesService } from "./devices.service";
   exports: [DevicesService]
 })
 export class DevicesModule {}
+

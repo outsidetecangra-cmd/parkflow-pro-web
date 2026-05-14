@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from "@nestjs/common";
+﻿import { Body, Controller, Post } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { AgentLoginBody, LoginBody } from "./auth.types";
 
@@ -16,3 +16,4 @@ export class AuthController {
     return this.authService.agentLogin(body);
   }
 }
+

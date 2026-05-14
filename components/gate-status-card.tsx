@@ -1,4 +1,4 @@
-import { Device } from "@/lib/types";
+﻿import { Device } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/status-badge";
@@ -19,3 +19,4 @@ export function GateStatusCard({ device }: { device: Device }) {
     </Panel>
   );
 }
+

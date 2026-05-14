@@ -1,4 +1,4 @@
-import { TicketView } from "@/lib/types";
+﻿import { TicketView } from "@/lib/types";
 import { Panel } from "@/components/ui/panel";
 
 export function TicketPanel({ ticket }: { ticket: TicketView }) {
@@ -31,3 +31,4 @@ export function TicketPanel({ ticket }: { ticket: TicketView }) {
     </Panel>
   );
 }
+

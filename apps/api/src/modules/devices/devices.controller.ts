@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from "@nestjs/common";
+﻿import { Body, Controller, Post } from "@nestjs/common";
 import { DevicesService } from "./devices.service";
 import { DeviceStatusBody } from "./devices.types";
 
@@ -11,3 +11,4 @@ export class DevicesController {
     return this.devicesService.updateStatus(body);
   }
 }
+

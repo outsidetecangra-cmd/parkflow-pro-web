@@ -1,4 +1,4 @@
-import { AgentApiClient } from "./api-client";
+﻿import { AgentApiClient } from "./api-client";
 import { FileStorage } from "../storage/file-storage";
 import { AgentConfig } from "../config/agent.config";
 import { LocalDeviceState, LocalQueuedEvent } from "../types/agent.types";
@@ -87,3 +87,4 @@ export class SyncManager {
     );
   }
 }
+

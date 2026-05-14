@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+﻿import { Module } from "@nestjs/common";
 import { OperationsController } from "./operations.controller";
 import { OperationsService } from "./operations.service";
 
@@ -8,3 +8,4 @@ import { OperationsService } from "./operations.service";
   exports: [OperationsService]
 })
 export class OperationsModule {}
+

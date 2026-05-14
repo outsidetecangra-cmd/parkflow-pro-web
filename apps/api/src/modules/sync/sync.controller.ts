@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from "@nestjs/common";
+﻿import { Body, Controller, Post } from "@nestjs/common";
 import { SyncService } from "./sync.service";
 import { AgentEventBody, SyncBatchBody } from "./sync.types";
 
@@ -16,3 +16,4 @@ export class SyncController {
     return this.syncService.syncBatch(body);
   }
 }
+

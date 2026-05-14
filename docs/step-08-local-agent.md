@@ -1,4 +1,4 @@
-# Passo 8 - Agente Local
+﻿# Passo 8 - Agente Local
 
 Objetivo deste passo:
 
@@ -69,3 +69,4 @@ Isso evita complexidade cedo demais.
 ## Proximo passo apos este
 
 - plugar o agente no fluxo de autenticacao e envio real para a API
+

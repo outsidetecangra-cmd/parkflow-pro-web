@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
+﻿import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../prisma/prisma.service";
 import { verifyPassword } from "../../common/security/password.util";
@@ -170,3 +170,4 @@ export class AuthService {
     };
   }
 }
+

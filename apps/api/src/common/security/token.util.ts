@@ -1,4 +1,4 @@
-type TokenPayload = {
+﻿type TokenPayload = {
   sub: string;
   type: "user" | "agent";
   role?: string;
@@ -65,3 +65,4 @@ export function getBearerToken(authorization?: string | null) {
 
   return token;
 }
+

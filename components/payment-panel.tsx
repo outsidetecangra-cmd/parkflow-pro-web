@@ -1,4 +1,4 @@
-import { TicketView } from "@/lib/types";
+﻿import { TicketView } from "@/lib/types";
 import { currency } from "@/lib/utils";
 import { Panel } from "@/components/ui/panel";
 import { StatusBadge } from "@/components/status-badge";
@@ -37,3 +37,4 @@ export function PaymentPanel({ ticket }: { ticket: TicketView }) {
     </Panel>
   );
 }
+

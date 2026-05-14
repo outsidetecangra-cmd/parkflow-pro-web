@@ -1,4 +1,4 @@
-# Passo 2 - Arquitetura do Repositório
+﻿# Passo 2 - Arquitetura do RepositÃ³rio
 
 Estrutura alvo do monorepo:
 
@@ -15,40 +15,40 @@ Responsabilidades:
 
 - login
 - dashboard
-- operação web
+- operaÃ§Ã£o web
 - mensalistas
 - financeiro
-- relatórios
-- administração
+- relatÃ³rios
+- administraÃ§Ã£o
 
 Estado atual:
 
-- o esqueleto já existente neste repositório representa o futuro `apps/web`
+- o esqueleto jÃ¡ existente neste repositÃ³rio representa o futuro `apps/web`
 
 ## `apps/api`
 
-- autenticação
+- autenticaÃ§Ã£o
 - RBAC
 - tickets
 - pagamentos
 - fiscal
-- automação
-- sincronização com agente local
+- automaÃ§Ã£o
+- sincronizaÃ§Ã£o com agente local
 - multiunidade
 
 ## `apps/agent`
 
-- integração local com hardware
+- integraÃ§Ã£o local com hardware
 - fila offline
-- sincronização com a nuvem
-- ponte com cancela, câmera, OCR, impressora, totem e terminal
+- sincronizaÃ§Ã£o com a nuvem
+- ponte com cancela, cÃ¢mera, OCR, impressora, totem e terminal
 
 ## `packages/shared`
 
 - tipos compartilhados
 - contratos de API
-- enums de domínio
-- validações reaproveitáveis
+- enums de domÃ­nio
+- validaÃ§Ãµes reaproveitÃ¡veis
 
 ## `packages/ui`
 
@@ -60,3 +60,4 @@ Estado atual:
 - `tsconfig`
 - lint
 - presets internos
+

@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from "@nestjs/common";
+﻿import { Controller, Get, Query } from "@nestjs/common";
 import { TicketsService } from "./tickets.service";
 
 @Controller("tickets")
@@ -10,3 +10,4 @@ export class TicketsController {
     return this.ticketsService.search(query);
   }
 }
+

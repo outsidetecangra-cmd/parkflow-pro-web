@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { Bell, Search, SunMoon } from "lucide-react";
@@ -27,7 +27,7 @@ export function TopbarContext() {
         <h2 className="text-xl font-semibold">Visao unificada da operacao</h2>
         {context ? (
           <p className="mt-1 text-sm text-slate-500">
-            {context.user.name} • {context.activeUnit?.name ?? "Sem unidade ativa"}
+            {context.user.name} â€¢ {context.activeUnit?.name ?? "Sem unidade ativa"}
           </p>
         ) : null}
       </div>
@@ -46,3 +46,4 @@ export function TopbarContext() {
     </header>
   );
 }
+

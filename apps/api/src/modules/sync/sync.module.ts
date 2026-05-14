@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+﻿import { Module } from "@nestjs/common";
 import { SyncController } from "./sync.controller";
 import { SyncService } from "./sync.service";
 
@@ -8,3 +8,4 @@ import { SyncService } from "./sync.service";
   exports: [SyncService]
 })
 export class SyncModule {}
+

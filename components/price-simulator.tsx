@@ -1,4 +1,4 @@
-import { Panel } from "@/components/ui/panel";
+﻿import { Panel } from "@/components/ui/panel";
 
 export function PriceSimulator() {
   return (
@@ -15,3 +15,4 @@ export function PriceSimulator() {
     </Panel>
   );
 }
+
