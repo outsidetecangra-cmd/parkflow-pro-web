@@ -1,171 +1,245 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
-import { CameraPreview } from "@/components/camera-preview";
-import { ConfirmDialog } from "@/components/confirm-dialog";
-import { PaymentPanel } from "@/components/payment-panel";
-import { TicketPanel } from "@/components/ticket-panel";
-import { VehicleCard } from "@/components/vehicle-card";
-import {
-  calculateExit,
-  confirmExitRequest,
-  fetchTicketByCode,
-  fetchUserContext,
-  getSession,
-  toTicketView,
-  type UserContext
-} from "@/lib/api";
-import type { TicketView } from "@/lib/types";
+import { useMemo, useState } from "react";
 
-const defaultTicketCode = "TK-20260513-001";
+type ExitTicketDemo = {
+  code: string;
+  plate: string;
+  model: string;
+  customer: string;
+  entryAt: string;
+  duration: string;
+  amount: number;
+  status: string;
+};
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}
 
 export function ExitOperationsClient() {
-  const [ticketCode, setTicketCode] = useState(defaultTicketCode);
-  const [ticket, setTicket] = useState<TicketView | null>(null);
-  const [alerts, setAlerts] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [context, setContext] = useState<UserContext | null>(null);
+  const [search, setSearch] = useState("DEMO001");
+  const [paymentMethod, setPaymentMethod] = useState("Pix");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [gateMessage, setGateMessage] = useState("");
+  const [receiptMessage, setReceiptMessage] = useState("");
 
-  async function loadTicket(code: string) {
-    setLoading(true);
-    setError(null);
-    setMessage(null);
+  const [ticket, setTicket] = useState<ExitTicketDemo>({
+    code: "PKF-248931",
+    plate: "DEMO001",
+    model: "Jeep Compass",
+    customer: "Cliente avulso",
+    entryAt: "08:20",
+    duration: "3h 35m",
+    amount: 28,
+    status: "Aguardando pagamento",
+  });
 
-    try {
-      const session = getSession();
-      const search = await fetchTicketByCode(code);
-      const calculation = await calculateExit(
-        code,
-        context?.activeUnit?.id ?? session?.user.allowedUnitIds?.[0]
-      );
-      setTicket(toTicketView({ search, calculation }));
-      setAlerts(calculation.alerts.map((alert) => alert.message));
-    } catch (loadError) {
-      setTicket(null);
-      setAlerts([]);
-      setError(loadError instanceof Error ? loadError.message : "Falha ao carregar ticket");
-    } finally {
-      setLoading(false);
-    }
+  const paidLabel = useMemo(() => {
+    return ticket.status === "Pago" ? "Pagamento confirmado" : "Pagamento pendente";
+  }, [ticket.status]);
+
+  function handleSearchTicket() {
+    setTicket({
+      code: "PKF-248931",
+      plate: search.toUpperCase() || "DEMO001",
+      model: "Jeep Compass",
+      customer: "Cliente avulso",
+      entryAt: "08:20",
+      duration: "3h 35m",
+      amount: 28,
+      status: "Aguardando pagamento",
+    });
+
+    setSuccessMessage(`Ticket localizado para a placa ${search.toUpperCase() || "DEMO001"}.`);
+    setGateMessage("");
+    setReceiptMessage("");
   }
 
-  useEffect(() => {
-    async function bootstrap() {
-      const session = getSession();
-      if (session?.accessToken) {
-        try {
-          const loadedContext = await fetchUserContext(session.accessToken);
-          setContext(loadedContext);
-        } catch {
-          setContext(null);
-        }
-      }
+  function handleCalculate() {
+    setTicket((current) => ({
+      ...current,
+      amount: 28,
+      duration: "3h 35m",
+      status: "Aguardando pagamento",
+    }));
 
-      await loadTicket(defaultTicketCode);
-    }
+    setSuccessMessage("Valor calculado com sucesso em modo demonstração.");
+  }
 
-    void bootstrap();
-  }, []);
+  function handlePayment() {
+    setTicket((current) => ({
+      ...current,
+      status: "Pago",
+    }));
 
-  async function handleConfirmExit() {
-    const session = getSession();
+    setSuccessMessage(`Pagamento confirmado via ${paymentMethod}.`);
+    setReceiptMessage(`Recibo digital gerado para o ticket ${ticket.code}.`);
+  }
 
-    if (!session?.accessToken || !ticket || !context?.activeUnit?.id) {
-      setError("Sessao ou unidade ativa indisponivel para confirmar a saida.");
-      return;
-    }
+  function handleConfirmExit() {
+    setTicket((current) => ({
+      ...current,
+      status: "Saída liberada",
+    }));
 
-    setConfirming(true);
-    setError(null);
-    setMessage(null);
+    setGateMessage("Cancela de saída liberada com sucesso em modo demonstração.");
+    setSuccessMessage("Saída registrada no painel operacional.");
+  }
 
-    try {
-      await confirmExitRequest({
-        token: session.accessToken,
-        ticketCode,
-        unitId: context.activeUnit.id,
-        exitAt: new Date().toISOString(),
-        payment: {
-          method: "pix",
-          amount: ticket.finalAmount,
-          status: "APPROVED",
-          reference: `WEB-${ticket.id}`
-        },
-        lpr: {
-          plate: ticket.plate,
-          confidence: 98.4
-        }
-      });
-
-      setMessage("Saida confirmada e cancela liberada.");
-      await loadTicket(ticketCode);
-    } catch (confirmError) {
-      setError(confirmError instanceof Error ? confirmError.message : "Falha ao confirmar saida");
-    } finally {
-      setConfirming(false);
-    }
+  function handleCancel() {
+    setSuccessMessage("");
+    setGateMessage("");
+    setReceiptMessage("");
+    setTicket((current) => ({
+      ...current,
+      status: "Aguardando pagamento",
+    }));
   }
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[0.7fr_1.3fr]">
-        {ticket ? <VehicleCard ticket={ticket} /> : <div className="surface rounded-3xl p-6">Nenhum ticket carregado.</div>}
-        <div className="surface rounded-3xl p-5">
-          <form
-            className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void loadTicket(ticketCode);
-            }}
-          >
-            <input
-              className="rounded-2xl border bg-transparent px-4 py-4 text-lg"
-              placeholder="Digite o ticket e pressione Enter"
-              value={ticketCode}
-              onChange={(event) => setTicketCode(event.target.value)}
-            />
-            <button className="rounded-2xl border px-4 py-4" type="submit">
-              {loading ? "Buscando..." : "Buscar ticket"}
-            </button>
-            <button className="rounded-2xl border px-4 py-4" type="button">
-              Buscar placa
-            </button>
-            <button className="rounded-2xl bg-sky-600 px-4 py-4 text-white" type="button">
-              Entrada passe livre
-            </button>
-          </form>
-          {message ? <p className="mt-3 text-sm text-emerald-600">{message}</p> : null}
-          {error ? <p className="mt-3 text-sm text-rose-500">{error}</p> : null}
-        </div>
-      </section>
-      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-6">
-          {ticket ? <TicketPanel ticket={ticket} /> : null}
-          {ticket ? <PaymentPanel ticket={ticket} /> : null}
-        </div>
-        <div className="space-y-6">
-          <CameraPreview title="Imagem da camera de saida" subtitle="Consulta operacional ligada na API central e calculo real de saida." />
-          <ConfirmDialog
-            title="Confirmar saida"
-            description="Registra pagamento, confirma a saida, grava LPR e simula a abertura da cancela."
-            confirmLabel={confirming ? "Confirmando..." : "Confirmar saida"}
-            onConfirm={handleConfirmExit}
-            disabled={!ticket || confirming}
+    <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <section className="surface rounded-3xl p-6">
+        <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+          Operação de saída
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold">Confirmar saída</h1>
+        <p className="mt-2 text-sm text-slate-500">
+          Fluxo demonstrativo com busca de ticket, cálculo, pagamento, recibo e liberação da cancela.
+        </p>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-[1fr_auto]">
+          <input
+            className="rounded-2xl border bg-transparent px-4 py-3"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Digite placa ou ticket"
           />
-          <div className="surface rounded-3xl p-5">
-            <h3 className="text-lg font-semibold">Observacoes operacionais</h3>
-            <ul className="mt-4 space-y-2 text-sm text-slate-500">
-              {alerts.length > 0 ? alerts.map((alert) => <li key={alert}>{alert}</li>) : <li>Sem alertas para este ticket.</li>}
-              <li>Status PDV refletido do ultimo pagamento vinculado.</li>
-              <li>Busca operacional carregada da API central em tempo real.</li>
-            </ul>
+          <button
+            onClick={handleSearchTicket}
+            className="rounded-2xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-400"
+          >
+            Buscar ticket
+          </button>
+        </div>
+
+        <div className="mt-6 rounded-3xl border p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-slate-500">Ticket</p>
+              <h2 className="mt-1 text-2xl font-semibold">{ticket.code}</h2>
+            </div>
+            <span className="rounded-full border px-4 py-2 text-sm">
+              {ticket.status}
+            </span>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <p><span className="text-slate-500">Placa:</span> {ticket.plate}</p>
+            <p><span className="text-slate-500">Veículo:</span> {ticket.model}</p>
+            <p><span className="text-slate-500">Cliente:</span> {ticket.customer}</p>
+            <p><span className="text-slate-500">Entrada:</span> {ticket.entryAt}</p>
+            <p><span className="text-slate-500">Permanência:</span> {ticket.duration}</p>
+            <p><span className="text-slate-500">Status PDV:</span> {paidLabel}</p>
+          </div>
+
+          <div className="mt-6 rounded-2xl bg-white/5 p-5">
+            <p className="text-sm text-slate-500">Total a pagar</p>
+            <p className="mt-1 text-4xl font-bold">{formatCurrency(ticket.amount)}</p>
           </div>
         </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <select
+            className="rounded-2xl border bg-transparent px-4 py-3"
+            value={paymentMethod}
+            onChange={(event) => setPaymentMethod(event.target.value)}
+          >
+            <option>Pix</option>
+            <option>Cartão de crédito</option>
+            <option>Cartão de débito</option>
+            <option>Dinheiro</option>
+            <option>Mensalista</option>
+          </select>
+
+          <button
+            onClick={handleCalculate}
+            className="rounded-2xl border px-5 py-3 hover:bg-white/10"
+          >
+            Calcular permanência
+          </button>
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button
+            onClick={handlePayment}
+            className="rounded-2xl bg-emerald-500 px-5 py-3 font-semibold text-slate-950 hover:bg-emerald-400"
+          >
+            Confirmar pagamento
+          </button>
+          <button
+            onClick={handleConfirmExit}
+            className="rounded-2xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-400"
+          >
+            Liberar saída
+          </button>
+          <button
+            onClick={handleCancel}
+            className="rounded-2xl border px-5 py-3 hover:bg-white/10"
+          >
+            Cancelar
+          </button>
+        </div>
+
+        {successMessage ? (
+          <p className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-300">
+            {successMessage}
+          </p>
+        ) : null}
+
+        {receiptMessage ? (
+          <p className="mt-3 rounded-2xl border border-blue-400/30 bg-blue-500/10 p-4 text-sm text-blue-300">
+            {receiptMessage}
+          </p>
+        ) : null}
+
+        {gateMessage ? (
+          <p className="mt-3 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4 text-sm text-cyan-300">
+            {gateMessage}
+          </p>
+        ) : null}
       </section>
+
+      <aside className="space-y-6">
+        <section className="surface rounded-3xl p-6">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+            Imagem da câmera de saída
+          </p>
+          <div className="mt-4 flex h-56 items-center justify-center rounded-3xl border bg-gradient-to-br from-slate-900 to-cyan-900/60">
+            <div className="text-center">
+              <p className="text-2xl font-semibold">{ticket.plate}</p>
+              <p className="mt-2 text-sm text-slate-400">
+                OCR/LPR simulado com 98,9% de confiança
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="surface rounded-3xl p-6">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+            Checklist operacional
+          </p>
+          <div className="mt-4 space-y-3 text-sm">
+            <p className="rounded-2xl border p-3">✓ Ticket localizado</p>
+            <p className="rounded-2xl border p-3">✓ Permanência calculada</p>
+            <p className="rounded-2xl border p-3">✓ PDV pronto para pagamento</p>
+            <p className="rounded-2xl border p-3">✓ Cancela pronta para liberação</p>
+          </div>
+        </section>
+      </aside>
     </div>
   );
 }
-

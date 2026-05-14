@@ -1,222 +1,188 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
-import { CameraPreview } from "@/components/camera-preview";
-import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Panel } from "@/components/ui/panel";
-import { VehicleCard } from "@/components/vehicle-card";
-import {
-  createEntryRequest,
-  fetchUserContext,
-  getSession,
-  type UserContext
-} from "@/lib/api";
-import { tickets } from "@/lib/mock-data";
-import type { TicketView } from "@/lib/types";
+import { useMemo, useState } from "react";
 
-const previewTicket = tickets[1];
-
-type EntryFormState = {
+type TicketDemo = {
+  code: string;
   plate: string;
-  vehicleModel: string;
-  vehicleColor: string;
-  customerName: string;
-  driverName: string;
-  spotCode: string;
-  notes: string;
+  model: string;
+  color: string;
+  customer: string;
+  yard: string;
+  priceTable: string;
+  entryAt: string;
+  status: string;
 };
 
+function makeTicketCode() {
+  const number = Math.floor(100000 + Math.random() * 900000);
+  return `PKF-${number}`;
+}
+
 export function EntryOperationsClient() {
-  const [context, setContext] = useState<UserContext | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [latestTicket, setLatestTicket] = useState<TicketView>(previewTicket);
-  const [form, setForm] = useState<EntryFormState>({
-    plate: "QWE1R23",
-    vehicleModel: "Honda HR-V",
-    vehicleColor: "Branco",
-    customerName: "Cliente avulso",
-    driverName: "Cliente avulso",
-    spotCode: "A-01",
-    notes: ""
-  });
+  const [plate, setPlate] = useState("QWF1R23");
+  const [model, setModel] = useState("Honda HR-V");
+  const [color, setColor] = useState("Branco");
+  const [customer, setCustomer] = useState("Cliente avulso");
+  const [driver, setDriver] = useState("Cliente avulso");
+  const [spot, setSpot] = useState("A-01");
+  const [yard, setYard] = useState("Patio principal");
+  const [priceTable, setPriceTable] = useState("Tabela padrao");
+  const [notes, setNotes] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [ocrMessage, setOcrMessage] = useState("");
+  const [gateMessage, setGateMessage] = useState("");
 
-  useEffect(() => {
-    async function loadContext() {
-      const session = getSession();
-      if (!session?.accessToken) return;
+  const [tickets, setTickets] = useState<TicketDemo[]>([
+    {
+      code: "PKF-248931",
+      plate: "DEMO001",
+      model: "Jeep Compass",
+      color: "Preto",
+      customer: "Cliente avulso",
+      yard: "Patio principal",
+      priceTable: "Tabela padrao",
+      entryAt: "08:20",
+      status: "Em aberto",
+    },
+  ]);
 
-      try {
-        const response = await fetchUserContext(session.accessToken);
-        setContext(response);
-      } catch {
-        setContext(null);
-      }
-    }
+  const latestTicket = tickets[0];
 
-    void loadContext();
-  }, []);
+  const nowLabel = useMemo(() => {
+    return new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date());
+  }, [tickets]);
 
-  function updateForm<K extends keyof EntryFormState>(field: K, value: EntryFormState[K]) {
-    setForm((current) => ({ ...current, [field]: value }));
+  function handleRegisterEntry() {
+    const newTicket: TicketDemo = {
+      code: makeTicketCode(),
+      plate: plate.toUpperCase(),
+      model,
+      color,
+      customer,
+      yard,
+      priceTable,
+      entryAt: nowLabel,
+      status: "Em aberto",
+    };
+
+    setTickets((current) => [newTicket, ...current].slice(0, 5));
+    setSuccessMessage(`Entrada registrada com sucesso. Ticket ${newTicket.code} criado.`);
+    setOcrMessage(`OCR/LPR validado para a placa ${newTicket.plate}.`);
+    setGateMessage("Cancela de entrada liberada em modo demonstração.");
   }
 
-  async function handleCreateEntry() {
-    const session = getSession();
+  function handleSimulateOcr() {
+    setPlate("DEMO002");
+    setModel("Toyota Corolla");
+    setColor("Prata");
+    setOcrMessage("Leitura OCR/LPR simulada: DEMO002 detectada com 98,7% de confiança.");
+  }
 
-    if (!session?.accessToken || !context?.activeUnit?.id) {
-      setError("Sessao ou unidade ativa indisponivel para registrar a entrada.");
-      return;
-    }
+  function handleOpenGate() {
+    setGateMessage("Cancela aberta com sucesso em modo demonstração.");
+  }
 
-    if (!context.operationDefaults.parkingLotId || !context.operationDefaults.priceTableId) {
-      setError("A unidade ativa nao possui patio ou tabela padrao configurados.");
-      return;
-    }
+  function handleQrCode() {
+    setSuccessMessage(`QR Code gerado para o ticket ${latestTicket.code}.`);
+  }
 
-    setSubmitting(true);
-    setError(null);
-    setSuccessMessage(null);
-
-    try {
-      const response = await createEntryRequest({
-        token: session.accessToken,
-        unitId: context.activeUnit.id,
-        plate: form.plate,
-        vehicleModel: form.vehicleModel,
-        vehicleColor: form.vehicleColor,
-        customerType: "AVULSO",
-        customerName: form.customerName,
-        yardId: context.operationDefaults.parkingLotId,
-        spotCode: form.spotCode,
-        priceTableId: context.operationDefaults.priceTableId,
-        terminalId: context.operationDefaults.terminalId ?? undefined,
-        cameraId: context.operationDefaults.cameraId ?? undefined,
-        notes: form.notes,
-        origin: "WEB",
-        lpr: {
-          plate: form.plate,
-          confidence: 97.9
-        }
-      });
-
-      setLatestTicket({
-        id: response.ticket.code,
-        plate: form.plate,
-        model: form.vehicleModel,
-        color: form.vehicleColor,
-        customer: form.customerName,
-        driver: form.driverName,
-        type: "Avulso",
-        yard: context.operationDefaults.parkingLotName ?? "Patio padrao",
-        spot: form.spotCode || "-",
-        priceTable: context.operationDefaults.priceTableName ?? "Tabela padrao",
-        entryAt: response.ticket.entryAt,
-        stayLabel: "0h 00m",
-        amount: 0,
-        discount: 0,
-        finalAmount: 0,
-        paymentStatus: "Aguardando pagamento",
-        validationStatus: "Entrada registrada",
-        observations: form.notes || "Sem observacoes.",
-        gateIn: context.operationDefaults.terminalName ?? "Terminal padrao",
-        cameraInImage: "/camera-entry.svg",
-        status: "Em aberto"
-      });
-
-      setSuccessMessage(`Entrada registrada com ticket ${response.ticket.code}.`);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Falha ao registrar entrada");
-    } finally {
-      setSubmitting(false);
-    }
+  function handleClear() {
+    setPlate("");
+    setModel("");
+    setColor("");
+    setCustomer("Cliente avulso");
+    setDriver("Cliente avulso");
+    setSpot("");
+    setNotes("");
+    setSuccessMessage("");
+    setOcrMessage("");
+    setGateMessage("");
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-      <div className="space-y-6">
-        <VehicleCard ticket={latestTicket} />
-        <Panel>
-          <h3 className="text-lg font-semibold">Registrar entrada</h3>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <input
-              className="rounded-2xl border bg-transparent px-4 py-3"
-              placeholder="Placa"
-              value={form.plate}
-              onChange={(event) => updateForm("plate", event.target.value.toUpperCase())}
-            />
-            <input
-              className="rounded-2xl border bg-transparent px-4 py-3"
-              placeholder="Modelo"
-              value={form.vehicleModel}
-              onChange={(event) => updateForm("vehicleModel", event.target.value)}
-            />
-            <input
-              className="rounded-2xl border bg-transparent px-4 py-3"
-              placeholder="Cor"
-              value={form.vehicleColor}
-              onChange={(event) => updateForm("vehicleColor", event.target.value)}
-            />
-            <input
-              className="rounded-2xl border bg-transparent px-4 py-3"
-              placeholder="Cliente"
-              value={form.customerName}
-              onChange={(event) => updateForm("customerName", event.target.value)}
-            />
-            <input
-              className="rounded-2xl border bg-transparent px-4 py-3"
-              placeholder="Condutor"
-              value={form.driverName}
-              onChange={(event) => updateForm("driverName", event.target.value)}
-            />
-            <input
-              className="rounded-2xl border bg-transparent px-4 py-3"
-              placeholder="Vaga"
-              value={form.spotCode}
-              onChange={(event) => updateForm("spotCode", event.target.value)}
-            />
-            <input
-              className="rounded-2xl border bg-transparent px-4 py-3"
-              placeholder="Patio"
-              value={context?.operationDefaults.parkingLotName ?? ""}
-              disabled
-            />
-            <input
-              className="rounded-2xl border bg-transparent px-4 py-3"
-              placeholder="Tabela de preco"
-              value={context?.operationDefaults.priceTableName ?? ""}
-              disabled
-            />
+    <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <section className="surface rounded-3xl p-6">
+        <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+          Operação de entrada
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold">Registrar entrada</h1>
+        <p className="mt-2 text-sm text-slate-500">
+          Fluxo demonstrativo com criação de ticket, OCR/LPR, QR Code e abertura de cancela.
+        </p>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          <input className="rounded-2xl border bg-transparent px-4 py-3" value={plate} onChange={(e) => setPlate(e.target.value)} placeholder="Placa" />
+          <input className="rounded-2xl border bg-transparent px-4 py-3" value={model} onChange={(e) => setModel(e.target.value)} placeholder="Modelo" />
+          <input className="rounded-2xl border bg-transparent px-4 py-3" value={color} onChange={(e) => setColor(e.target.value)} placeholder="Cor" />
+          <input className="rounded-2xl border bg-transparent px-4 py-3" value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="Cliente" />
+          <input className="rounded-2xl border bg-transparent px-4 py-3" value={driver} onChange={(e) => setDriver(e.target.value)} placeholder="Condutor" />
+          <input className="rounded-2xl border bg-transparent px-4 py-3" value={spot} onChange={(e) => setSpot(e.target.value)} placeholder="Vaga" />
+          <input className="rounded-2xl border bg-transparent px-4 py-3" value={yard} onChange={(e) => setYard(e.target.value)} placeholder="Pátio" />
+          <input className="rounded-2xl border bg-transparent px-4 py-3" value={priceTable} onChange={(e) => setPriceTable(e.target.value)} placeholder="Tabela de preço" />
+        </div>
+
+        <textarea
+          className="mt-3 min-h-24 w-full rounded-2xl border bg-transparent px-4 py-3"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Observações e serviços adicionais"
+        />
+
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button onClick={handleRegisterEntry} className="rounded-2xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-400">
+            Registrar entrada
+          </button>
+          <button onClick={handleQrCode} className="rounded-2xl border px-5 py-3 hover:bg-white/10">
+            Gerar QR Code
+          </button>
+          <button onClick={handleSimulateOcr} className="rounded-2xl border px-5 py-3 hover:bg-white/10">
+            Simular OCR/LPR
+          </button>
+          <button onClick={handleOpenGate} className="rounded-2xl border px-5 py-3 hover:bg-white/10">
+            Abrir cancela
+          </button>
+          <button onClick={handleClear} className="rounded-2xl border px-5 py-3 hover:bg-white/10">
+            Limpar
+          </button>
+        </div>
+
+        {successMessage ? <p className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-300">{successMessage}</p> : null}
+        {ocrMessage ? <p className="mt-3 rounded-2xl border border-blue-400/30 bg-blue-500/10 p-4 text-sm text-blue-300">{ocrMessage}</p> : null}
+        {gateMessage ? <p className="mt-3 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4 text-sm text-cyan-300">{gateMessage}</p> : null}
+      </section>
+
+      <aside className="space-y-6">
+        <section className="surface rounded-3xl p-6">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Último ticket</p>
+          <h2 className="mt-3 text-2xl font-semibold">{latestTicket.code}</h2>
+          <div className="mt-4 grid gap-3 text-sm">
+            <p><span className="text-slate-500">Placa:</span> {latestTicket.plate}</p>
+            <p><span className="text-slate-500">Veículo:</span> {latestTicket.model} — {latestTicket.color}</p>
+            <p><span className="text-slate-500">Cliente:</span> {latestTicket.customer}</p>
+            <p><span className="text-slate-500">Entrada:</span> {latestTicket.entryAt}</p>
+            <p><span className="text-slate-500">Status:</span> {latestTicket.status}</p>
           </div>
-          <textarea
-            className="mt-3 min-h-28 w-full rounded-2xl border bg-transparent px-4 py-3"
-            placeholder="Observacoes, avarias e servicos adicionais"
-            value={form.notes}
-            onChange={(event) => updateForm("notes", event.target.value)}
-          />
-          <div className="mt-4 flex flex-wrap gap-2">
-            {["Gerar ticket", "Gerar QR Code", "Simular OCR/LPR", "Abrir cancela", "Recibo digital"].map((action) => (
-              <button key={action} className="rounded-2xl border px-4 py-3 text-sm" type="button">
-                {action}
-              </button>
+        </section>
+
+        <section className="surface rounded-3xl p-6">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Tickets recentes</p>
+          <div className="mt-4 space-y-3">
+            {tickets.map((ticket) => (
+              <div key={ticket.code} className="rounded-2xl border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <strong>{ticket.plate}</strong>
+                  <span className="text-xs text-slate-500">{ticket.entryAt}</span>
+                </div>
+                <p className="mt-1 text-sm text-slate-500">{ticket.code} · {ticket.status}</p>
+              </div>
             ))}
           </div>
-          {successMessage ? <p className="mt-4 text-sm text-emerald-600">{successMessage}</p> : null}
-          {error ? <p className="mt-4 text-sm text-rose-500">{error}</p> : null}
-        </Panel>
-      </div>
-      <div className="space-y-6">
-        <CameraPreview title="Camera de entrada" subtitle="Captura operacional vinculada ao endpoint real de entrada e contexto da unidade." />
-        <ConfirmDialog
-          title="Liberar entrada"
-          description="Valida contexto da unidade, registra ticket, QR Code, LPR e libera a cancela simulada."
-          confirmLabel={submitting ? "Registrando..." : "Registrar entrada"}
-          onConfirm={handleCreateEntry}
-          disabled={submitting}
-        />
-      </div>
+        </section>
+      </aside>
     </div>
   );
 }
-
