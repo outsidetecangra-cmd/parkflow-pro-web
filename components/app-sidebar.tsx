@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import type { Route } from "next";
 import { LayoutDashboard, CarFront, Wallet, Users, Building2, Radar, FileBarChart2, Settings } from "lucide-react";
 
@@ -11,6 +11,7 @@ const groups = [
   { href: "/automacao/equipamentos", label: "Automacao", icon: Radar },
   { href: "/erp/financeiro", label: "ERP", icon: Building2 },
   { href: "/relatorios", label: "Relatorios", icon: FileBarChart2 },
+  { href: "/admin/precos", label: "Preços", icon: Wallet },
   { href: "/admin/configuracoes", label: "Admin", icon: Settings }
 ] as const satisfies ReadonlyArray<{
   href: Route;

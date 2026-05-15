@@ -1,4 +1,4 @@
-﻿import {
+import {
   BadRequestException,
   ForbiddenException,
   Injectable,
@@ -27,6 +27,8 @@ export class OperationsService {
     couponCode?: string | null;
     partnerValidationCode?: string | null;
     manualDiscount?: number;
+    firstHourValue?: number;
+    nextHourValue?: number;
   }) {
     const diffMs = Math.max(0, input.exitAt.getTime() - input.entryAt.getTime());
     const stayMinutes = Math.ceil(diffMs / 60000);
@@ -44,8 +46,8 @@ export class OperationsService {
 
     const billableMinutes = stayMinutes - input.graceMinutes;
     const billableHours = Math.ceil(billableMinutes / 60);
-    const firstHour = 12;
-    const nextHours = Math.max(0, billableHours - 1) * 6;
+    const firstHour = input.firstHourValue ?? 12;
+    const nextHours = Math.max(0, billableHours - 1) * (input.nextHourValue ?? 6);
     let originalAmount = firstHour + nextHours;
 
     if (input.maxDaily) {
@@ -259,7 +261,11 @@ export class OperationsService {
       where: { code: body.ticketCode },
       include: {
         vehicle: true,
-        priceTable: true
+        priceTable: {
+          include: {
+            rules: true
+          }
+        }
       }
     });
 
@@ -284,13 +290,20 @@ export class OperationsService {
     }
 
     const exitAt = body.exitAt ? new Date(body.exitAt) : new Date();
+    
+    // Extrai os valores do banco se existirem
+    const firstHourRule = ticket.priceTable?.rules?.find(r => r.ruleType === "primeira_hora");
+    const additionalFractionRule = ticket.priceTable?.rules?.find(r => r.ruleType === "fracao_adicional");
+
     const pricing = this.computePricing({
       entryAt: ticket.entryAt,
       exitAt,
       graceMinutes: ticket.priceTable?.graceMinutes ?? 15,
       maxDaily: ticket.priceTable?.maxDaily ? Number(ticket.priceTable.maxDaily) : null,
       couponCode: body.couponCode,
-      partnerValidationCode: body.partnerValidationCode
+      partnerValidationCode: body.partnerValidationCode,
+      firstHourValue: firstHourRule ? Number(firstHourRule.value) : undefined,
+      nextHourValue: additionalFractionRule ? Number(additionalFractionRule.value) : undefined
     });
 
     const latestCapture = await this.prisma.lprCapture.findFirst({
@@ -342,7 +355,11 @@ export class OperationsService {
       where: { code: body.ticketCode },
       include: {
         vehicle: true,
-        priceTable: true,
+        priceTable: {
+          include: {
+            rules: true
+          }
+        },
         payments: {
           orderBy: {
             createdAt: "desc"
@@ -364,12 +381,18 @@ export class OperationsService {
 
     const exitAt = new Date(body.exitAt);
     const manualDiscount = body.discount?.amount ?? 0;
+
+    const firstHourRule = ticket.priceTable?.rules?.find(r => r.ruleType === "primeira_hora");
+    const additionalFractionRule = ticket.priceTable?.rules?.find(r => r.ruleType === "fracao_adicional");
+
     const pricing = this.computePricing({
       entryAt: ticket.entryAt,
       exitAt,
       graceMinutes: ticket.priceTable?.graceMinutes ?? 15,
       maxDaily: ticket.priceTable?.maxDaily ? Number(ticket.priceTable.maxDaily) : null,
-      manualDiscount
+      manualDiscount,
+      firstHourValue: firstHourRule ? Number(firstHourRule.value) : undefined,
+      nextHourValue: additionalFractionRule ? Number(additionalFractionRule.value) : undefined
     });
 
     const canExitWithoutPayment = ticket.status === "EXEMPT";

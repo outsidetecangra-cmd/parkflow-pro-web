@@ -5,13 +5,13 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-app.use(helmet());
+  app.use(helmet());
 
   app.setGlobalPrefix("api");
 
   const allowedOrigins = (
     process.env.CORS_ORIGIN ??
-    "http://localhost:3000,https://outsidetecangra-cmd.github.io"
+    "http://localhost:3000,http://127.0.0.1:3000,https://outsidetecangra-cmd.github.io"
   )
     .split(",")
     .map((value) => value.trim())

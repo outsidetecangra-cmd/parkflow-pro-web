@@ -1,4 +1,4 @@
-﻿import { TicketView } from "@/lib/types";
+import { TicketView } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001/api";
 const STORAGE_KEY = "parkflow.session";
@@ -46,6 +46,16 @@ type ApiEnvelope<T> = {
   success: boolean;
   data: T;
 };
+
+async function parseApiJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`Resposta inválida da API (${response.status} ${response.statusText}): ${text.slice(0, 200)}`);
+  }
+}
 
 export function saveSession(session: StoredSession) {
   if (typeof window === "undefined") return;
@@ -315,5 +325,48 @@ export function toTicketView(input: {
             ? "Isento"
             : "Finalizado"
   };
+}
+
+export async function fetchPricingConfigs() {
+  const url = typeof window === "undefined" ? `${API_BASE_URL}/pricing` : "/api/pricing";
+  const response = await fetch(url);
+  const payload = await parseApiJson<
+    (ApiEnvelope<{
+      priceTableId: string;
+      name: string;
+      graceMinutes: number;
+      maxDaily: number | null;
+      firstHour: number;
+      additionalFraction: number;
+    }> & { error?: { message: string } })
+  >(response);
+
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.error?.message ?? "Falha ao buscar configurações de preços");
+  }
+
+  return payload.data;
+}
+
+export async function updatePricingConfigs(input: {
+  firstHour: number;
+  additionalFraction: number;
+  graceMinutes: number;
+  maxDaily: number | null;
+}) {
+  const url = typeof window === "undefined" ? `${API_BASE_URL}/pricing` : "/api/pricing";
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input)
+  });
+
+  const payload = await parseApiJson<(ApiEnvelope<{ message: string }> & { error?: { message: string } })>(response);
+
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.error?.message ?? "Falha ao atualizar configurações de preços");
+  }
+
+  return payload.data;
 }
 

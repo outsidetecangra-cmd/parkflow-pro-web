@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "api:dev": "npm run dev --prefix apps/api",
+    "api:dev": "npm run prisma:generate --prefix apps/api && npm run dev --prefix apps/api",
     "agent:dev": "npm run dev --prefix apps/agent",
     "api:build": "npm run build --prefix apps/api",
     "agent:build": "npm run build --prefix apps/agent",
@@ -21,6 +21,9 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "@prisma/client": "^5.14.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.395.0",
@@ -43,4 +46,3 @@
     "typescript": "^5.5.2"
   }
 }
-

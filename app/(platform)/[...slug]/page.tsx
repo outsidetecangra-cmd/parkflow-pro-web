@@ -1,4 +1,4 @@
-﻿import { AuditTimeline } from "@/components/audit-timeline";
+import { AuditTimeline } from "@/components/audit-timeline";
 import { DataTable } from "@/components/data-table";
 import { KioskLayout } from "@/components/kiosk-layout";
 import { LprCaptureCard } from "@/components/lpr-capture-card";
@@ -13,11 +13,15 @@ export const dynamicParams = false;
 
 const directRoutes = new Set([
   "admin/configuracoes",
+  "admin/precos",
   "automacao/equipamentos",
   "caixa",
+  "dashboard",
   "erp/financeiro",
   "mensalistas",
+  "operacao/entrada",
   "operacao/patio",
+  "operacao/saida",
   "relatorios",
 ]);
 
