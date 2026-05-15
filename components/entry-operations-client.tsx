@@ -1,26 +1,19 @@
-﻿"use client";
+"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-type TicketDemo = {
-  code: string;
-  plate: string;
-  model: string;
-  color: string;
-  customer: string;
-  yard: string;
-  priceTable: string;
-  entryAt: string;
-  status: string;
-};
-
-function makeTicketCode() {
-  const number = Math.floor(100000 + Math.random() * 900000);
-  return `PKF-${number}`;
-}
+import {
+  createDemoTicket,
+  formatTimeLabel,
+  getDefaultDemoState,
+  getDemoTicketStatusLabel,
+  listDemoTickets,
+  subscribeDemoStore,
+  type DemoTicket,
+} from "@/lib/demo-store";
 
 export function EntryOperationsClient() {
-  const [plate, setPlate] = useState("QWF1R23");
+  const [plate, setPlate] = useState("DEMO777");
   const [model, setModel] = useState("Honda HR-V");
   const [color, setColor] = useState("Branco");
   const [customer, setCustomer] = useState("Cliente avulso");
@@ -32,61 +25,57 @@ export function EntryOperationsClient() {
   const [successMessage, setSuccessMessage] = useState("");
   const [ocrMessage, setOcrMessage] = useState("");
   const [gateMessage, setGateMessage] = useState("");
+  const [tickets, setTickets] = useState<DemoTicket[]>(() =>
+    getDefaultDemoState().tickets.slice(0, 5)
+  );
 
-  const [tickets, setTickets] = useState<TicketDemo[]>([
-    {
-      code: "PKF-248931",
-      plate: "DEMO001",
-      model: "Jeep Compass",
-      color: "Preto",
-      customer: "Cliente avulso",
-      yard: "Patio principal",
-      priceTable: "Tabela padrao",
-      entryAt: "08:20",
-      status: "Em aberto",
-    },
-  ]);
+  useEffect(() => {
+    function refreshTickets() {
+      setTickets(listDemoTickets().slice(0, 5));
+    }
+
+    refreshTickets();
+    return subscribeDemoStore(refreshTickets);
+  }, []);
 
   const latestTicket = tickets[0];
 
-  const nowLabel = useMemo(() => {
-    return new Intl.DateTimeFormat("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date());
-  }, [tickets]);
-
   function handleRegisterEntry() {
-    const newTicket: TicketDemo = {
-      code: makeTicketCode(),
-      plate: plate.toUpperCase(),
+    const newTicket = createDemoTicket({
+      plate,
       model,
       color,
       customer,
+      driver,
+      spot,
       yard,
       priceTable,
-      entryAt: nowLabel,
-      status: "Em aberto",
-    };
+      notes,
+    });
 
-    setTickets((current) => [newTicket, ...current].slice(0, 5));
+    setTickets(listDemoTickets().slice(0, 5));
     setSuccessMessage(`Entrada registrada com sucesso. Ticket ${newTicket.code} criado.`);
     setOcrMessage(`OCR/LPR validado para a placa ${newTicket.plate}.`);
-    setGateMessage("Cancela de entrada liberada em modo demonstração.");
+    setGateMessage(`Cancela de entrada liberada. Vaga ${newTicket.spot} ocupada.`);
   }
 
   function handleSimulateOcr() {
     setPlate("DEMO002");
     setModel("Toyota Corolla");
     setColor("Prata");
-    setOcrMessage("Leitura OCR/LPR simulada: DEMO002 detectada com 98,7% de confiança.");
+    setOcrMessage("Leitura OCR/LPR simulada: DEMO002 detectada com 98,7% de confianca.");
   }
 
   function handleOpenGate() {
-    setGateMessage("Cancela aberta com sucesso em modo demonstração.");
+    setGateMessage("Cancela aberta com sucesso em modo demonstracao.");
   }
 
   function handleQrCode() {
+    if (!latestTicket) {
+      setSuccessMessage("Registre uma entrada para gerar o QR Code.");
+      return;
+    }
+
     setSuccessMessage(`QR Code gerado para o ticket ${latestTicket.code}.`);
   }
 
@@ -158,14 +147,21 @@ export function EntryOperationsClient() {
       <aside className="space-y-6">
         <section className="surface rounded-3xl p-6">
           <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Último ticket</p>
-          <h2 className="mt-3 text-2xl font-semibold">{latestTicket.code}</h2>
-          <div className="mt-4 grid gap-3 text-sm">
-            <p><span className="text-slate-500">Placa:</span> {latestTicket.plate}</p>
-            <p><span className="text-slate-500">Veículo:</span> {latestTicket.model} — {latestTicket.color}</p>
-            <p><span className="text-slate-500">Cliente:</span> {latestTicket.customer}</p>
-            <p><span className="text-slate-500">Entrada:</span> {latestTicket.entryAt}</p>
-            <p><span className="text-slate-500">Status:</span> {latestTicket.status}</p>
-          </div>
+          {latestTicket ? (
+            <>
+              <h2 className="mt-3 text-2xl font-semibold">{latestTicket.code}</h2>
+              <div className="mt-4 grid gap-3 text-sm">
+                <p><span className="text-slate-500">Placa:</span> {latestTicket.plate}</p>
+                <p><span className="text-slate-500">Veículo:</span> {latestTicket.model} - {latestTicket.color}</p>
+                <p><span className="text-slate-500">Cliente:</span> {latestTicket.customer}</p>
+                <p><span className="text-slate-500">Entrada:</span> {formatTimeLabel(latestTicket.entryAtISO)}</p>
+                <p><span className="text-slate-500">Vaga:</span> {latestTicket.spot}</p>
+                <p><span className="text-slate-500">Status:</span> {getDemoTicketStatusLabel(latestTicket.status)}</p>
+              </div>
+            </>
+          ) : (
+            <p className="mt-4 text-sm text-slate-500">Nenhum ticket registrado.</p>
+          )}
         </section>
 
         <section className="surface rounded-3xl p-6">
@@ -175,9 +171,11 @@ export function EntryOperationsClient() {
               <div key={ticket.code} className="rounded-2xl border p-4">
                 <div className="flex items-center justify-between gap-3">
                   <strong>{ticket.plate}</strong>
-                  <span className="text-xs text-slate-500">{ticket.entryAt}</span>
+                  <span className="text-xs text-slate-500">{formatTimeLabel(ticket.entryAtISO)}</span>
                 </div>
-                <p className="mt-1 text-sm text-slate-500">{ticket.code} · {ticket.status}</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {ticket.code} · {getDemoTicketStatusLabel(ticket.status)}
+                </p>
               </div>
             ))}
           </div>

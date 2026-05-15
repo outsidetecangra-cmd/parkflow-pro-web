@@ -1,52 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import {
+  findDemoTicket,
+  formatCurrency,
+  getDefaultDemoState,
+  getDemoDashboardTotals,
+  getDemoState,
+  subscribeDemoStore,
+  type DemoState,
+} from "@/lib/demo-store";
 
 type PeriodKey = "Hoje" | "Ontem" | "Semana" | "Mes" | "Periodo personalizado";
 type ViewKey = "Unidade" | "Patio" | "Operador";
 
-const periodData: Record<PeriodKey, {
-  revenue: number;
-  tickets: number;
-  occupancy: number;
-  exits: number;
-  cancelled: number;
-}> = {
-  Hoje: {
-    revenue: 2840,
-    tickets: 126,
-    occupancy: 78,
-    exits: 98,
-    cancelled: 3,
-  },
-  Ontem: {
-    revenue: 2410,
-    tickets: 109,
-    occupancy: 71,
-    exits: 91,
-    cancelled: 2,
-  },
-  Semana: {
-    revenue: 18450,
-    tickets: 742,
-    occupancy: 82,
-    exits: 690,
-    cancelled: 11,
-  },
-  Mes: {
-    revenue: 72890,
-    tickets: 3184,
-    occupancy: 76,
-    exits: 2940,
-    cancelled: 37,
-  },
-  "Periodo personalizado": {
-    revenue: 9650,
-    tickets: 384,
-    occupancy: 74,
-    exits: 351,
-    cancelled: 6,
-  },
+const periodScale: Record<PeriodKey, number> = {
+  Hoje: 1,
+  Ontem: 0.85,
+  Semana: 5,
+  Mes: 18,
+  "Periodo personalizado": 2.5,
 };
 
 const viewDescriptions: Record<ViewKey, string> = {
@@ -54,20 +28,6 @@ const viewDescriptions: Record<ViewKey, string> = {
   Patio: "Foco em ocupacao, vagas livres, permanencia e fluxo de veiculos.",
   Operador: "Foco em produtividade, tickets, caixa e acoes por operador.",
 };
-
-const alerts = [
-  "Cancela norte online",
-  "OCR/LPR sincronizado",
-  "Caixa aberto e conciliado",
-  "3 tickets aguardando pagamento",
-];
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-}
 
 function MetricCard({
   label,
@@ -92,17 +52,59 @@ export function DashboardClient() {
   const [view, setView] = useState<ViewKey>("Unidade");
   const [message, setMessage] = useState("Filtro ativo: Hoje / Unidade.");
   const [search, setSearch] = useState("");
+  const [demoState, setDemoState] = useState<DemoState>(() => getDefaultDemoState());
 
-  const data = periodData[period];
+  useEffect(() => {
+    function refreshDashboard() {
+      setDemoState(getDemoState());
+    }
+
+    refreshDashboard();
+    return subscribeDemoStore(refreshDashboard);
+  }, []);
+
+  const baseTotals = useMemo(() => getDemoDashboardTotals(demoState), [demoState]);
+
+  const data = useMemo(() => {
+    const scale = periodScale[period];
+
+    return {
+      revenue: Math.round(baseTotals.revenue * scale),
+      tickets: Math.max(baseTotals.tickets, Math.round(baseTotals.tickets * scale)),
+      occupancy: baseTotals.occupancy,
+      exits: Math.max(baseTotals.exits, Math.round(baseTotals.exits * scale)),
+      cancelled: Math.round(baseTotals.cancelled * scale),
+    };
+  }, [baseTotals, period]);
+
+  const alerts = useMemo(() => {
+    const pendingTickets = demoState.tickets.filter((ticket) => ticket.status === "open").length;
+
+    return [
+      "Cancela norte online",
+      "OCR/LPR sincronizado",
+      `Caixa com saldo ${formatCurrency(baseTotals.balance)}`,
+      `${pendingTickets} tickets aguardando pagamento`,
+    ];
+  }, [baseTotals.balance, demoState.tickets]);
 
   const chartData = useMemo(() => {
-    const base = period === "Hoje" ? [35, 48, 62, 78, 71, 84] : [44, 59, 73, 68, 82, 91];
+    const base = [35, 48, 62, 78, 71, 84];
 
-    return base.map((value, index) => ({
-      label: ["08h", "10h", "12h", "14h", "16h", "18h"][index],
-      value: view === "Patio" ? value : view === "Operador" ? Math.max(20, value - 12) : value,
-    }));
-  }, [period, view]);
+    return base.map((value, index) => {
+      const adjustedValue =
+        view === "Patio"
+          ? Math.max(8, Math.min(100, baseTotals.occupancy + index * 4))
+          : view === "Operador"
+            ? Math.max(20, value - 12)
+            : value;
+
+      return {
+        label: ["08h", "10h", "12h", "14h", "16h", "18h"][index],
+        value: adjustedValue,
+      };
+    });
+  }, [baseTotals.occupancy, view]);
 
   function applyPeriod(nextPeriod: PeriodKey) {
     setPeriod(nextPeriod);
@@ -120,10 +122,16 @@ export function DashboardClient() {
       return;
     }
 
-    setMessage(`Busca demonstrativa realizada por: ${search}.`);
+    const ticket = findDemoTicket(search, demoState);
+    setMessage(
+      ticket
+        ? `Ticket ${ticket.code} localizado para ${ticket.plate}.`
+        : `Busca demonstrativa realizada por: ${search}.`
+    );
   }
 
   function handleRefresh() {
+    setDemoState(getDemoState());
     setMessage(`Dashboard atualizado: ${period} / ${view}.`);
   }
 
@@ -218,7 +226,7 @@ export function DashboardClient() {
         <MetricCard
           label="Ocupacao"
           value={`${data.occupancy}%`}
-          detail={`Visao: ${view}`}
+          detail={`${baseTotals.activeVehicles} veiculos no patio`}
         />
         <MetricCard
           label="Saidas"

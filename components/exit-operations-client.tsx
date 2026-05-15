@@ -1,104 +1,157 @@
-﻿"use client";
+"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type ExitTicketDemo = {
-  code: string;
-  plate: string;
-  model: string;
-  customer: string;
-  entryAt: string;
-  duration: string;
-  amount: number;
-  status: string;
-};
+import {
+  calculateDemoAmount,
+  confirmDemoPayment,
+  findDemoTicket,
+  formatCurrency,
+  formatDurationLabel,
+  formatTimeLabel,
+  getDefaultDemoState,
+  getDemoTicketStatusLabel,
+  releaseDemoExit,
+  subscribeDemoStore,
+  type DemoTicket,
+} from "@/lib/demo-store";
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
+function getInitialTicket() {
+  return getDefaultDemoState().tickets.find((ticket) => ticket.plate === "DEMO001") ?? null;
+}
+
+function getTicketAmount(ticket: DemoTicket | null) {
+  if (!ticket) return 0;
+  return ticket.amount > 0 ? ticket.amount : calculateDemoAmount(ticket.entryAtISO);
+}
+
+function getTicketDuration(ticket: DemoTicket | null) {
+  if (!ticket) return "-";
+  return ticket.durationLabel || formatDurationLabel(ticket.entryAtISO, new Date().toISOString());
+}
+
+function getExitStatusLabel(ticket: DemoTicket | null) {
+  if (!ticket) return "Aguardando busca";
+  if (ticket.status === "open") return "Aguardando pagamento";
+  return getDemoTicketStatusLabel(ticket.status);
 }
 
 export function ExitOperationsClient() {
-  const [search, setSearch] = useState("DEMO001");
+  const [search, setSearch] = useState("DEMO777");
   const [paymentMethod, setPaymentMethod] = useState("Pix");
   const [successMessage, setSuccessMessage] = useState("");
   const [gateMessage, setGateMessage] = useState("");
   const [receiptMessage, setReceiptMessage] = useState("");
+  const [ticket, setTicket] = useState<DemoTicket | null>(() => getInitialTicket());
 
-  const [ticket, setTicket] = useState<ExitTicketDemo>({
-    code: "PKF-248931",
-    plate: "DEMO001",
-    model: "Jeep Compass",
-    customer: "Cliente avulso",
-    entryAt: "08:20",
-    duration: "3h 35m",
-    amount: 28,
-    status: "Aguardando pagamento",
-  });
+  useEffect(() => {
+    function refreshTicket() {
+      setTicket((current) => {
+        if (!current) return current;
+        return findDemoTicket(current.code) ?? current;
+      });
+    }
+
+    return subscribeDemoStore(refreshTicket);
+  }, []);
 
   const paidLabel = useMemo(() => {
-    return ticket.status === "Pago" ? "Pagamento confirmado" : "Pagamento pendente";
-  }, [ticket.status]);
+    if (!ticket) return "Ticket nao localizado";
+    return ticket.status === "paid" || ticket.status === "exited"
+      ? "Pagamento confirmado"
+      : "Pagamento pendente";
+  }, [ticket]);
 
   function handleSearchTicket() {
-    setTicket({
-      code: "PKF-248931",
-      plate: search.toUpperCase() || "DEMO001",
-      model: "Jeep Compass",
-      customer: "Cliente avulso",
-      entryAt: "08:20",
-      duration: "3h 35m",
-      amount: 28,
-      status: "Aguardando pagamento",
-    });
+    const foundTicket = findDemoTicket(search);
 
-    setSuccessMessage(`Ticket localizado para a placa ${search.toUpperCase() || "DEMO001"}.`);
+    if (!foundTicket) {
+      setTicket(null);
+      setSuccessMessage(`Nenhum ticket encontrado para ${search.toUpperCase()}.`);
+      setGateMessage("");
+      setReceiptMessage("");
+      return;
+    }
+
+    setTicket(foundTicket);
+    setSuccessMessage(`Ticket localizado para a placa ${foundTicket.plate}.`);
     setGateMessage("");
     setReceiptMessage("");
   }
 
   function handleCalculate() {
-    setTicket((current) => ({
-      ...current,
-      amount: 28,
-      duration: "3h 35m",
-      status: "Aguardando pagamento",
-    }));
+    if (!ticket) {
+      setSuccessMessage("Busque um ticket antes de calcular a permanencia.");
+      return;
+    }
 
-    setSuccessMessage("Valor calculado com sucesso em modo demonstração.");
+    setTicket({
+      ...ticket,
+      amount: getTicketAmount(ticket),
+      durationLabel: getTicketDuration(ticket),
+    });
+
+    setSuccessMessage("Valor calculado com sucesso em modo demonstracao.");
   }
 
   function handlePayment() {
-    setTicket((current) => ({
-      ...current,
-      status: "Pago",
-    }));
+    if (!ticket) {
+      setSuccessMessage("Busque um ticket antes de confirmar pagamento.");
+      return;
+    }
 
+    if (ticket.status === "exited") {
+      setSuccessMessage("Este ticket ja teve a saida liberada.");
+      return;
+    }
+
+    const result = confirmDemoPayment(ticket.code, paymentMethod);
+    if (!result) {
+      setSuccessMessage("Nao foi possivel confirmar o pagamento desse ticket.");
+      return;
+    }
+
+    setTicket(result.ticket);
     setSuccessMessage(`Pagamento confirmado via ${paymentMethod}.`);
-    setReceiptMessage(`Recibo digital gerado para o ticket ${ticket.code}.`);
+    setReceiptMessage(`Recibo digital gerado para o ticket ${result.ticket.code}.`);
   }
 
   function handleConfirmExit() {
-    setTicket((current) => ({
-      ...current,
-      status: "Saída liberada",
-    }));
+    if (!ticket) {
+      setSuccessMessage("Busque um ticket antes de liberar a saida.");
+      return;
+    }
 
-    setGateMessage("Cancela de saída liberada com sucesso em modo demonstração.");
-    setSuccessMessage("Saída registrada no painel operacional.");
+    if (ticket.status === "open") {
+      setSuccessMessage("Confirme o pagamento antes de liberar a saida.");
+      return;
+    }
+
+    if (ticket.status === "exited") {
+      setGateMessage("Saida ja liberada para este ticket.");
+      return;
+    }
+
+    const result = releaseDemoExit(ticket.code);
+    if (!result) {
+      setSuccessMessage("Nao foi possivel liberar a saida desse ticket.");
+      return;
+    }
+
+    setTicket(result.ticket);
+    setGateMessage("Cancela de saida liberada com sucesso em modo demonstracao.");
+    setSuccessMessage("Saida registrada no painel operacional.");
   }
 
   function handleCancel() {
     setSuccessMessage("");
     setGateMessage("");
     setReceiptMessage("");
-    setTicket((current) => ({
-      ...current,
-      status: "Aguardando pagamento",
-    }));
   }
+
+  const ticketAmount = getTicketAmount(ticket);
+  const ticketDuration = getTicketDuration(ticket);
+  const ticketStatus = getExitStatusLabel(ticket);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
@@ -130,25 +183,25 @@ export function ExitOperationsClient() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-sm text-slate-500">Ticket</p>
-              <h2 className="mt-1 text-2xl font-semibold">{ticket.code}</h2>
+              <h2 className="mt-1 text-2xl font-semibold">{ticket?.code ?? "Nao localizado"}</h2>
             </div>
             <span className="rounded-full border px-4 py-2 text-sm">
-              {ticket.status}
+              {ticketStatus}
             </span>
           </div>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <p><span className="text-slate-500">Placa:</span> {ticket.plate}</p>
-            <p><span className="text-slate-500">Veículo:</span> {ticket.model}</p>
-            <p><span className="text-slate-500">Cliente:</span> {ticket.customer}</p>
-            <p><span className="text-slate-500">Entrada:</span> {ticket.entryAt}</p>
-            <p><span className="text-slate-500">Permanência:</span> {ticket.duration}</p>
+            <p><span className="text-slate-500">Placa:</span> {ticket?.plate ?? "-"}</p>
+            <p><span className="text-slate-500">Veículo:</span> {ticket?.model ?? "-"}</p>
+            <p><span className="text-slate-500">Cliente:</span> {ticket?.customer ?? "-"}</p>
+            <p><span className="text-slate-500">Entrada:</span> {ticket ? formatTimeLabel(ticket.entryAtISO) : "-"}</p>
+            <p><span className="text-slate-500">Permanência:</span> {ticketDuration}</p>
             <p><span className="text-slate-500">Status PDV:</span> {paidLabel}</p>
           </div>
 
           <div className="mt-6 rounded-2xl bg-white/5 p-5">
             <p className="text-sm text-slate-500">Total a pagar</p>
-            <p className="mt-1 text-4xl font-bold">{formatCurrency(ticket.amount)}</p>
+            <p className="mt-1 text-4xl font-bold">{formatCurrency(ticketAmount)}</p>
           </div>
         </div>
 
@@ -220,7 +273,7 @@ export function ExitOperationsClient() {
           </p>
           <div className="mt-4 flex h-56 items-center justify-center rounded-3xl border bg-gradient-to-br from-slate-900 to-cyan-900/60">
             <div className="text-center">
-              <p className="text-2xl font-semibold">{ticket.plate}</p>
+              <p className="text-2xl font-semibold">{ticket?.plate ?? "-----"}</p>
               <p className="mt-2 text-sm text-slate-400">
                 OCR/LPR simulado com 98,9% de confiança
               </p>

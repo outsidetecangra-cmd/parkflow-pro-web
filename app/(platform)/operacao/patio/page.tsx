@@ -1,69 +1,42 @@
-﻿"use client";
+"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type PatioVehicle = {
-  spot: string;
-  plate: string;
-  model: string;
-  customer: string;
-  entryAt: string;
-  duration: string;
-  status: "Ocupada" | "Reservada" | "Livre";
-};
+import {
+  createDemoPatioEntry,
+  getDefaultDemoState,
+  getDemoPatioSpots,
+  getDemoState,
+  releaseDemoExit,
+  subscribeDemoStore,
+  type DemoPatioSpot,
+} from "@/lib/demo-store";
 
-const initialVehicles: PatioVehicle[] = [
-  {
-    spot: "A-01",
-    plate: "DEMO001",
-    model: "Jeep Compass",
-    customer: "Cliente avulso",
-    entryAt: "08:20",
-    duration: "3h 35m",
-    status: "Ocupada",
-  },
-  {
-    spot: "A-02",
-    plate: "DEMO002",
-    model: "Toyota Corolla",
-    customer: "Mensalista",
-    entryAt: "09:10",
-    duration: "2h 45m",
-    status: "Ocupada",
-  },
-  {
-    spot: "B-04",
-    plate: "DEMO003",
-    model: "Honda HR-V",
-    customer: "Cliente avulso",
-    entryAt: "10:05",
-    duration: "1h 50m",
-    status: "Ocupada",
-  },
-  {
-    spot: "C-08",
-    plate: "—",
-    model: "Disponível",
-    customer: "—",
-    entryAt: "—",
-    duration: "—",
-    status: "Livre",
-  },
-  {
-    spot: "D-02",
-    plate: "RESERVA",
-    model: "Vaga mensalista",
-    customer: "Contrato ativo",
-    entryAt: "—",
-    duration: "—",
-    status: "Reservada",
-  },
-];
+function getInitialPatioSpots() {
+  return getDemoPatioSpots(getDefaultDemoState());
+}
 
 export default function PatioPage() {
-  const [vehicles, setVehicles] = useState<PatioVehicle[]>(initialVehicles);
-  const [selectedSpot, setSelectedSpot] = useState<PatioVehicle>(initialVehicles[0]);
+  const [vehicles, setVehicles] = useState<DemoPatioSpot[]>(() => getInitialPatioSpots());
+  const [selectedSpot, setSelectedSpot] = useState<DemoPatioSpot>(() => getInitialPatioSpots()[0]);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    function refreshPatio() {
+      const nextVehicles = getDemoPatioSpots(getDemoState());
+      setVehicles(nextVehicles);
+      setSelectedSpot((current) => {
+        return (
+          nextVehicles.find((item) => item.ticketCode && item.ticketCode === current.ticketCode) ??
+          nextVehicles.find((item) => item.spot === current.spot) ??
+          nextVehicles[0]
+        );
+      });
+    }
+
+    refreshPatio();
+    return subscribeDemoStore(refreshPatio);
+  }, []);
 
   const totals = useMemo(() => {
     const occupied = vehicles.filter((item) => item.status === "Ocupada").length;
@@ -73,37 +46,34 @@ export default function PatioPage() {
     return { occupied, reserved, free, total: vehicles.length };
   }, [vehicles]);
 
+  function refreshFromStore(selectedTicketCode?: string) {
+    const nextVehicles = getDemoPatioSpots(getDemoState());
+    setVehicles(nextVehicles);
+    setSelectedSpot(
+      nextVehicles.find((item) => selectedTicketCode && item.ticketCode === selectedTicketCode) ??
+        nextVehicles.find((item) => item.spot === selectedSpot.spot) ??
+        nextVehicles[0]
+    );
+  }
+
   function handleRefresh() {
+    refreshFromStore(selectedSpot.ticketCode);
     setMessage("Mapa do pátio atualizado em modo demonstração.");
   }
 
   function handleReleaseSpot() {
-    setVehicles((current) =>
-      current.map((item) =>
-        item.spot === selectedSpot.spot
-          ? {
-              ...item,
-              plate: "—",
-              model: "Disponível",
-              customer: "—",
-              entryAt: "—",
-              duration: "—",
-              status: "Livre",
-            }
-          : item
-      )
-    );
+    if (selectedSpot.status !== "Ocupada" || !selectedSpot.ticketCode) {
+      setMessage(`Vaga ${selectedSpot.spot} ja esta livre ou reservada.`);
+      return;
+    }
 
-    setSelectedSpot((current) => ({
-      ...current,
-      plate: "—",
-      model: "Disponível",
-      customer: "—",
-      entryAt: "—",
-      duration: "—",
-      status: "Livre",
-    }));
+    releaseDemoExit(selectedSpot.ticketCode);
+    const nextVehicles = getDemoPatioSpots(getDemoState());
+    const nextSelected =
+      nextVehicles.find((item) => item.spot === selectedSpot.spot) ?? nextVehicles[0];
 
+    setVehicles(nextVehicles);
+    setSelectedSpot(nextSelected);
     setMessage(`Vaga ${selectedSpot.spot} liberada em modo demonstração.`);
   }
 
@@ -115,22 +85,9 @@ export default function PatioPage() {
       return;
     }
 
-    const updatedSpot: PatioVehicle = {
-      spot: freeSpot.spot,
-      plate: "DEMO004",
-      model: "Fiat Pulse",
-      customer: "Cliente avulso",
-      entryAt: "Agora",
-      duration: "0h 00m",
-      status: "Ocupada",
-    };
-
-    setVehicles((current) =>
-      current.map((item) => (item.spot === freeSpot.spot ? updatedSpot : item))
-    );
-
-    setSelectedSpot(updatedSpot);
-    setMessage(`Nova entrada simulada na vaga ${freeSpot.spot}.`);
+    const ticket = createDemoPatioEntry();
+    refreshFromStore(ticket.code);
+    setMessage(`Nova entrada ${ticket.plate} simulada na vaga ${ticket.spot}.`);
   }
 
   return (
@@ -250,10 +207,10 @@ export default function PatioPage() {
               Eventos recentes
             </p>
             <div className="mt-4 space-y-3 text-sm">
-              <p className="rounded-2xl border p-3">✓ Entrada DEMO001 validada por OCR/LPR</p>
-              <p className="rounded-2xl border p-3">✓ Vaga A-02 vinculada a mensalista</p>
-              <p className="rounded-2xl border p-3">✓ Cancela norte online</p>
-              <p className="rounded-2xl border p-3">✓ Operador sincronizado</p>
+              <p className="rounded-2xl border p-3">✓ Entradas registradas sincronizam com o pátio</p>
+              <p className="rounded-2xl border p-3">✓ Pagamentos mantem veiculo ocupado ate a saída</p>
+              <p className="rounded-2xl border p-3">✓ Liberação remove o veiculo da ocupação</p>
+              <p className="rounded-2xl border p-3">✓ Operador sincronizado no navegador</p>
             </div>
           </section>
 

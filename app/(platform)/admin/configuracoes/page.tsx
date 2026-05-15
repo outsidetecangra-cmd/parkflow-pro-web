@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { getDemoState, resetDemoStore } from "@/lib/demo-store";
+
 type ModuleKey =
   | "entrada"
   | "saida"
@@ -197,6 +199,7 @@ export default function AdminConfiguracoesPage() {
     const backup = {
       generatedAt: new Date().toISOString(),
       settings,
+      demoState: getDemoState(),
     };
 
     localStorage.setItem("parkflow-demo-backup", JSON.stringify(backup));
@@ -205,6 +208,11 @@ export default function AdminConfiguracoesPage() {
 
   function restoreDefaults() {
     saveSettings(defaultSettings, "Configurações restauradas para o padrão de demonstração.");
+  }
+
+  function resetDemoData() {
+    resetDemoStore();
+    setMessage("Dados demo resetados: tickets, pagamentos, caixa e pátio recriados.");
   }
 
   function exportSettings() {
@@ -364,6 +372,13 @@ export default function AdminConfiguracoesPage() {
               className="rounded-2xl border px-5 py-3 hover:bg-white/10"
             >
               Restaurar padrão
+            </button>
+
+            <button
+              onClick={resetDemoData}
+              className="rounded-2xl border px-5 py-3 hover:bg-white/10"
+            >
+              Resetar dados demo
             </button>
           </div>
         </section>

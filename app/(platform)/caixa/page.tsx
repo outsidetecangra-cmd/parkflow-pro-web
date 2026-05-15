@@ -1,63 +1,37 @@
-﻿"use client";
+"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type CashMovement = {
-  id: string;
-  type: "Entrada" | "Saída";
-  description: string;
-  method: string;
-  amount: number;
-  time: string;
-};
-
-const initialMovements: CashMovement[] = [
-  {
-    id: "MOV-001",
-    type: "Entrada",
-    description: "Pagamento ticket PKF-248931",
-    method: "Pix",
-    amount: 28,
-    time: "11:42",
-  },
-  {
-    id: "MOV-002",
-    type: "Entrada",
-    description: "Mensalidade contrato DEMO002",
-    method: "Cartão de crédito",
-    amount: 180,
-    time: "10:18",
-  },
-  {
-    id: "MOV-003",
-    type: "Saída",
-    description: "Sangria operacional",
-    method: "Dinheiro",
-    amount: 50,
-    time: "09:30",
-  },
-];
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-}
-
-function makeMovementId() {
-  const number = Math.floor(100 + Math.random() * 900);
-  return `MOV-${number}`;
-}
+import {
+  addDemoCashMovement,
+  formatCurrency,
+  formatTimeLabel,
+  getDefaultDemoState,
+  getDemoState,
+  subscribeDemoStore,
+  type DemoCashMovement,
+  type DemoCashMovementType,
+} from "@/lib/demo-store";
 
 export default function CaixaPage() {
   const [isOpen, setIsOpen] = useState(true);
-  const [movements, setMovements] = useState<CashMovement[]>(initialMovements);
+  const [movements, setMovements] = useState<DemoCashMovement[]>(() =>
+    getDefaultDemoState().cashMovements
+  );
   const [description, setDescription] = useState("Pagamento ticket balcão");
   const [amount, setAmount] = useState("35");
   const [method, setMethod] = useState("Pix");
-  const [type, setType] = useState<"Entrada" | "Saída">("Entrada");
+  const [type, setType] = useState<DemoCashMovementType>("Entrada");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    function refreshMovements() {
+      setMovements(getDemoState().cashMovements);
+    }
+
+    refreshMovements();
+    return subscribeDemoStore(refreshMovements);
+  }, []);
 
   const totals = useMemo(() => {
     const entradas = movements
@@ -76,13 +50,6 @@ export default function CaixaPage() {
     };
   }, [movements]);
 
-  function nowTime() {
-    return new Intl.DateTimeFormat("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date());
-  }
-
   function handleAddMovement() {
     const numericAmount = Number(amount.replace(",", "."));
 
@@ -91,16 +58,14 @@ export default function CaixaPage() {
       return;
     }
 
-    const movement: CashMovement = {
-      id: makeMovementId(),
+    const result = addDemoCashMovement({
       type,
       description,
       method,
       amount: numericAmount,
-      time: nowTime(),
-    };
+    });
 
-    setMovements((current) => [movement, ...current]);
+    setMovements(result.state.cashMovements);
     setMessage(`${type} registrada com sucesso: ${formatCurrency(numericAmount)} via ${method}.`);
   }
 
@@ -172,7 +137,7 @@ export default function CaixaPage() {
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             <select
               value={type}
-              onChange={(event) => setType(event.target.value as "Entrada" | "Saída")}
+              onChange={(event) => setType(event.target.value as DemoCashMovementType)}
               className="rounded-2xl border bg-transparent px-4 py-3"
             >
               <option>Entrada</option>
@@ -249,7 +214,7 @@ export default function CaixaPage() {
                   <div>
                     <p className="font-semibold">{movement.description}</p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {movement.id} · {movement.method} · {movement.time}
+                      {movement.id} · {movement.method} · {formatTimeLabel(movement.atISO)}
                     </p>
                   </div>
 
