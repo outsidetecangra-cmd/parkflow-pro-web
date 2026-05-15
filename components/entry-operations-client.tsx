@@ -41,7 +41,7 @@ export function EntryOperationsClient() {
   const latestTicket = tickets[0];
 
   function handleRegisterEntry() {
-    const newTicket = createDemoTicket({
+    const result = createDemoTicket({
       plate,
       model,
       color,
@@ -52,6 +52,7 @@ export function EntryOperationsClient() {
       priceTable,
       notes,
     });
+    const newTicket = result.ticket;
 
     setTickets(listDemoTickets().slice(0, 5));
     setSuccessMessage(`Entrada registrada com sucesso. Ticket ${newTicket.code} criado.`);

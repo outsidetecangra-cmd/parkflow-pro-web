@@ -106,7 +106,7 @@ export function ExitOperationsClient() {
     }
 
     const result = confirmDemoPayment(ticket.code, paymentMethod);
-    if (!result) {
+    if (!result || !result.ticket) {
       setSuccessMessage("Nao foi possivel confirmar o pagamento desse ticket.");
       return;
     }
@@ -133,7 +133,7 @@ export function ExitOperationsClient() {
     }
 
     const result = releaseDemoExit(ticket.code);
-    if (!result) {
+    if (!result || !result.ticket) {
       setSuccessMessage("Nao foi possivel liberar a saida desse ticket.");
       return;
     }

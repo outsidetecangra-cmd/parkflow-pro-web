@@ -214,7 +214,7 @@ export default function CaixaPage() {
                   <div>
                     <p className="font-semibold">{movement.description}</p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {movement.id} · {movement.method} · {formatTimeLabel(movement.atISO)}
+                      {movement.id} · {movement.method} · {formatTimeLabel(movement.time)}
                     </p>
                   </div>
 

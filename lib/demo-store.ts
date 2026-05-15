@@ -1,24 +1,33 @@
-export type DemoTicketStatus = "open" | "paid" | "exited" | "cancelled";
-export type DemoCashMovementType = "Entrada" | "Saída";
+export type DemoTicketStatus = "open" | "paid" | "exited";
+
+export type DemoPricing = {
+  firstHour: number;
+  additionalHour: number;
+  dailyRate: number;
+  monthlyStandard: number;
+  monthlyPremium: number;
+  valet: number;
+  carWash: number;
+  lostTicket: number;
+  toleranceMinutes: number;
+};
 
 export type DemoTicket = {
+  id: string;
   code: string;
   plate: string;
   model: string;
   color: string;
   customer: string;
-  driver: string;
+  entryAt: string;
+  entryAtISO: string;
   spot: string;
   yard: string;
   priceTable: string;
-  entryAtISO: string;
-  exitAtISO?: string;
+  durationMinutes: number;
   durationLabel?: string;
   amount: number;
   status: DemoTicketStatus;
-  paymentMethod?: string;
-  paidAtISO?: string;
-  notes?: string;
 };
 
 export type DemoPayment = {
@@ -27,432 +36,53 @@ export type DemoPayment = {
   plate: string;
   method: string;
   amount: number;
-  atISO: string;
+  paidAt: string;
 };
 
 export type DemoCashMovement = {
   id: string;
-  type: DemoCashMovementType;
+  type: "Entrada" | "Saída";
   description: string;
   method: string;
   amount: number;
-  atISO: string;
-  source: "ticket" | "manual";
-  ticketCode?: string;
+  time: string;
 };
 
 export type DemoState = {
-  version: 2;
+  pricing: DemoPricing;
   tickets: DemoTicket[];
   payments: DemoPayment[];
   cashMovements: DemoCashMovement[];
-  totalSpots: number;
-  reservedSpots: string[];
 };
 
-export type DemoPatioSpot = {
-  spot: string;
-  plate: string;
-  model: string;
-  customer: string;
-  entryAt: string;
-  duration: string;
-  status: "Ocupada" | "Reservada" | "Livre";
-  ticketCode?: string;
+const STORAGE_KEY = "smartpark-demo-state-v1";
+
+export const defaultPricing: DemoPricing = {
+  firstHour: 12,
+  additionalHour: 6,
+  dailyRate: 45,
+  monthlyStandard: 220,
+  monthlyPremium: 350,
+  valet: 25,
+  carWash: 40,
+  lostTicket: 80,
+  toleranceMinutes: 15,
 };
 
-export type DemoDashboardTotals = {
-  revenue: number;
-  tickets: number;
-  occupancy: number;
-  exits: number;
-  cancelled: number;
-  activeVehicles: number;
-  freeSpots: number;
-  cashIn: number;
-  cashOut: number;
-  balance: number;
-};
-
-type LegacyDemoTicket = {
-  code?: string;
-  plate?: string;
-  model?: string;
-  color?: string;
-  customer?: string;
-  yard?: string;
-  priceTable?: string;
-  entryAtISO?: string;
-  exitAtISO?: string;
-  durationLabel?: string;
-  amount?: number;
-  status?: string;
-  paymentMethod?: string;
-  paidAtISO?: string;
-};
-
-type LegacyDemoPayment = {
-  id?: string;
-  ticketCode?: string;
-  method?: string;
-  amount?: number;
-  atISO?: string;
-};
-
-export const DEMO_STORE_KEY = "smartpark_demo_store_v2";
-const LEGACY_DEMO_DB_KEY = "smartpark_demo_db_v1";
-const DEMO_STORE_EVENT = "smartpark-demo-store-updated";
-
-const DEMO_SPOTS = [
-  "A-01",
-  "A-02",
-  "A-03",
-  "A-04",
-  "B-01",
-  "B-02",
-  "B-03",
-  "B-04",
-  "C-01",
-  "C-02",
-  "C-08",
-  "D-02",
-];
-
-const RESERVED_SPOTS = ["D-02"];
-
-const demoModels = [
-  { model: "Fiat Pulse", color: "Prata" },
-  { model: "Honda HR-V", color: "Branco" },
-  { model: "Toyota Corolla", color: "Preto" },
-  { model: "Jeep Compass", color: "Cinza" },
-  { model: "Chevrolet Tracker", color: "Azul" },
-];
-
-function isBrowser() {
-  return typeof window !== "undefined" && typeof localStorage !== "undefined";
-}
-
-function parseJson(value: string | null): unknown {
-  if (!value) return null;
-
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-}
-
-function todayAt(hour: number, minute: number) {
-  const date = new Date();
-  date.setHours(hour, minute, 0, 0);
-  return date.toISOString();
+function nowTime() {
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date());
 }
 
 function makeId(prefix: string) {
-  return `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+  const number = Math.floor(100000 + Math.random() * 900000);
+  return `${prefix}-${number}`;
 }
 
-function normalizePlate(plate: string) {
-  return plate.trim().toUpperCase();
-}
-
-function mapLegacyStatus(status?: string): DemoTicketStatus {
-  if (status === "Pago") return "paid";
-  if (status === "Saída liberada") return "exited";
-  if (status === "Cancelado") return "cancelled";
-  return "open";
-}
-
-function normalizeTicket(ticket: Partial<DemoTicket>): DemoTicket {
-  const entryAtISO = ticket.entryAtISO ?? new Date().toISOString();
-
-  return {
-    code: ticket.code || makeId("PKF"),
-    plate: normalizePlate(ticket.plate || "DEMO000"),
-    model: ticket.model || "Veiculo demo",
-    color: ticket.color || "Prata",
-    customer: ticket.customer || "Cliente avulso",
-    driver: ticket.driver || ticket.customer || "Cliente avulso",
-    spot: ticket.spot || "A-01",
-    yard: ticket.yard || "Patio principal",
-    priceTable: ticket.priceTable || "Tabela padrao",
-    entryAtISO,
-    exitAtISO: ticket.exitAtISO,
-    durationLabel: ticket.durationLabel,
-    amount: Number(ticket.amount || 0),
-    status: ticket.status || "open",
-    paymentMethod: ticket.paymentMethod,
-    paidAtISO: ticket.paidAtISO,
-    notes: ticket.notes,
-  };
-}
-
-function normalizeState(candidate: Partial<DemoState>): DemoState {
-  const defaultState = getDefaultDemoState();
-  const tickets = Array.isArray(candidate.tickets)
-    ? candidate.tickets.map((ticket) => normalizeTicket(ticket))
-    : defaultState.tickets;
-
-  const payments: DemoPayment[] = Array.isArray(candidate.payments)
-    ? candidate.payments.map((payment) => ({
-        id: payment.id || makeId("PAY"),
-        ticketCode: payment.ticketCode || "",
-        plate: payment.plate || "",
-        method: payment.method || "Pix",
-        amount: Number(payment.amount || 0),
-        atISO: payment.atISO || new Date().toISOString(),
-      }))
-    : defaultState.payments;
-
-  const cashMovements: DemoCashMovement[] = Array.isArray(candidate.cashMovements)
-    ? candidate.cashMovements.map((movement) => ({
-        id: movement.id || makeId("MOV"),
-        type: movement.type === "Saída" ? "Saída" : "Entrada",
-        description: movement.description || "Movimento demo",
-        method: movement.method || "Pix",
-        amount: Number(movement.amount || 0),
-        atISO: movement.atISO || new Date().toISOString(),
-        source: movement.source === "ticket" ? "ticket" : "manual",
-        ticketCode: movement.ticketCode,
-      }))
-    : defaultState.cashMovements;
-
-  return {
-    version: 2,
-    tickets,
-    payments,
-    cashMovements,
-    totalSpots: Number(candidate.totalSpots || defaultState.totalSpots),
-    reservedSpots: Array.isArray(candidate.reservedSpots)
-      ? candidate.reservedSpots
-      : defaultState.reservedSpots,
-  };
-}
-
-function migrateLegacyDb(value: unknown): DemoState | null {
-  if (!value || typeof value !== "object") return null;
-
-  const legacy = value as {
-    version?: number;
-    tickets?: LegacyDemoTicket[];
-    payments?: LegacyDemoPayment[];
-  };
-
-  if (legacy.version !== 1 || !Array.isArray(legacy.tickets)) return null;
-
-  const tickets = legacy.tickets.map((ticket, index) =>
-    normalizeTicket({
-      code: ticket.code,
-      plate: ticket.plate,
-      model: ticket.model,
-      color: ticket.color,
-      customer: ticket.customer,
-      driver: ticket.customer,
-      spot: DEMO_SPOTS[index] || `Z-${String(index + 1).padStart(2, "0")}`,
-      yard: ticket.yard,
-      priceTable: ticket.priceTable,
-      entryAtISO: ticket.entryAtISO,
-      exitAtISO: ticket.exitAtISO,
-      durationLabel: ticket.durationLabel,
-      amount: ticket.amount,
-      status: mapLegacyStatus(ticket.status),
-      paymentMethod: ticket.paymentMethod,
-      paidAtISO: ticket.paidAtISO,
-    })
-  );
-
-  const payments = Array.isArray(legacy.payments)
-    ? legacy.payments.map((payment) => {
-        const ticket = tickets.find((item) => item.code === payment.ticketCode);
-
-        return {
-          id: payment.id || makeId("PAY"),
-          ticketCode: payment.ticketCode || "",
-          plate: ticket?.plate || "",
-          method: payment.method || "Pix",
-          amount: Number(payment.amount || 0),
-          atISO: payment.atISO || new Date().toISOString(),
-        };
-      })
-    : [];
-
-  const cashMovements = payments.map((payment) => ({
-    id: makeId("MOV"),
-    type: "Entrada" as const,
-    description: `Pagamento ticket ${payment.ticketCode}`,
-    method: payment.method,
-    amount: payment.amount,
-    atISO: payment.atISO,
-    source: "ticket" as const,
-    ticketCode: payment.ticketCode,
-  }));
-
-  return normalizeState({
-    tickets,
-    payments,
-    cashMovements,
-    totalSpots: 12,
-    reservedSpots: RESERVED_SPOTS,
-  });
-}
-
-export function getDefaultDemoState(): DemoState {
-  const entryOne = todayAt(8, 20);
-  const entryTwo = todayAt(9, 10);
-  const entryThree = todayAt(7, 45);
-  const paidTwo = todayAt(10, 40);
-  const paidThree = todayAt(11, 15);
-
-  return {
-    version: 2,
-    totalSpots: 12,
-    reservedSpots: RESERVED_SPOTS,
-    tickets: [
-      {
-        code: "PKF-248931",
-        plate: "DEMO001",
-        model: "Jeep Compass",
-        color: "Preto",
-        customer: "Cliente avulso",
-        driver: "Cliente avulso",
-        spot: "A-01",
-        yard: "Patio principal",
-        priceTable: "Tabela padrao",
-        entryAtISO: entryOne,
-        amount: 0,
-        status: "open",
-      },
-      {
-        code: "PKF-309442",
-        plate: "DEMO002",
-        model: "Toyota Corolla",
-        color: "Prata",
-        customer: "Mensalista",
-        driver: "Mensalista",
-        spot: "A-02",
-        yard: "Patio principal",
-        priceTable: "Tabela padrao",
-        entryAtISO: entryTwo,
-        durationLabel: formatDurationLabel(entryTwo, paidTwo),
-        amount: 18,
-        status: "paid",
-        paymentMethod: "Pix",
-        paidAtISO: paidTwo,
-      },
-      {
-        code: "PKF-418205",
-        plate: "DEMO003",
-        model: "Honda HR-V",
-        color: "Branco",
-        customer: "Cliente avulso",
-        driver: "Cliente avulso",
-        spot: "B-04",
-        yard: "Patio principal",
-        priceTable: "Tabela padrao",
-        entryAtISO: entryThree,
-        exitAtISO: paidThree,
-        durationLabel: formatDurationLabel(entryThree, paidThree),
-        amount: 24,
-        status: "exited",
-        paymentMethod: "Cartao de debito",
-        paidAtISO: paidThree,
-      },
-    ],
-    payments: [
-      {
-        id: "PAY-000001",
-        ticketCode: "PKF-309442",
-        plate: "DEMO002",
-        method: "Pix",
-        amount: 18,
-        atISO: paidTwo,
-      },
-      {
-        id: "PAY-000002",
-        ticketCode: "PKF-418205",
-        plate: "DEMO003",
-        method: "Cartao de debito",
-        amount: 24,
-        atISO: paidThree,
-      },
-    ],
-    cashMovements: [
-      {
-        id: "MOV-000001",
-        type: "Entrada",
-        description: "Pagamento ticket PKF-309442",
-        method: "Pix",
-        amount: 18,
-        atISO: paidTwo,
-        source: "ticket",
-        ticketCode: "PKF-309442",
-      },
-      {
-        id: "MOV-000002",
-        type: "Entrada",
-        description: "Pagamento ticket PKF-418205",
-        method: "Cartao de debito",
-        amount: 24,
-        atISO: paidThree,
-        source: "ticket",
-        ticketCode: "PKF-418205",
-      },
-      {
-        id: "MOV-000003",
-        type: "Saída",
-        description: "Sangria operacional",
-        method: "Dinheiro",
-        amount: 50,
-        atISO: todayAt(9, 30),
-        source: "manual",
-      },
-    ],
-  };
-}
-
-export function getDemoState(): DemoState {
-  if (!isBrowser()) return getDefaultDemoState();
-
-  const current = parseJson(localStorage.getItem(DEMO_STORE_KEY));
-  if (current && typeof current === "object") {
-    const maybeState = current as Partial<DemoState>;
-    if (maybeState.version === 2) return normalizeState(maybeState);
-  }
-
-  const legacy = migrateLegacyDb(parseJson(localStorage.getItem(LEGACY_DEMO_DB_KEY)));
-  return legacy ?? getDefaultDemoState();
-}
-
-export function writeDemoState(nextState: DemoState): DemoState {
-  const normalized = normalizeState(nextState);
-
-  if (isBrowser()) {
-    localStorage.setItem(DEMO_STORE_KEY, JSON.stringify(normalized));
-    window.dispatchEvent(new Event(DEMO_STORE_EVENT));
-  }
-
-  return normalized;
-}
-
-export function resetDemoStore(): DemoState {
-  const state = getDefaultDemoState();
-  return writeDemoState(state);
-}
-
-export function subscribeDemoStore(listener: () => void) {
-  if (!isBrowser()) return () => undefined;
-
-  const handleStorage = (event: StorageEvent) => {
-    if (event.key === DEMO_STORE_KEY || event.key === LEGACY_DEMO_DB_KEY) listener();
-  };
-
-  window.addEventListener(DEMO_STORE_EVENT, listener);
-  window.addEventListener("storage", handleStorage);
-
-  return () => {
-    window.removeEventListener(DEMO_STORE_EVENT, listener);
-    window.removeEventListener("storage", handleStorage);
-  };
+function makeTicketCode() {
+  return makeId("PKF");
 }
 
 export function formatCurrency(value: number) {
@@ -462,85 +92,208 @@ export function formatCurrency(value: number) {
   }).format(value);
 }
 
-export function formatTimeLabel(iso: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
-}
-
-export function formatDurationLabel(entryAtISO: string, exitAtISO: string) {
-  const entry = new Date(entryAtISO);
-  const exit = new Date(exitAtISO);
-  const deltaMs = Math.max(0, exit.getTime() - entry.getTime());
-  const totalMinutes = Math.floor(deltaMs / 60000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
-}
-
-export function calculateDemoAmount(entryAtISO: string, exitAtISO = new Date().toISOString()) {
-  const entry = new Date(entryAtISO);
-  const exit = new Date(exitAtISO);
-  const totalMinutes = Math.max(1, Math.ceil((exit.getTime() - entry.getTime()) / 60000));
-  const billableHours = Math.max(1, Math.ceil(totalMinutes / 60));
-
-  return 12 + Math.max(0, billableHours - 1) * 6;
-}
-
-export function getDemoTicketStatusLabel(status: DemoTicketStatus) {
-  const labels: Record<DemoTicketStatus, string> = {
-    open: "Em aberto",
-    paid: "Pago",
-    exited: "Saida liberada",
-    cancelled: "Cancelado",
-  };
-
-  return labels[status];
-}
-
-export function isActiveTicket(ticket: DemoTicket) {
-  return ticket.status === "open" || ticket.status === "paid";
-}
-
-export function listDemoTickets(state = getDemoState()) {
-  return [...state.tickets];
-}
-
-export function listActiveDemoTickets(state = getDemoState()) {
-  return state.tickets.filter(isActiveTicket);
-}
-
-export function findDemoTicket(query: string, state = getDemoState()) {
-  const normalized = normalizePlate(query);
-  if (!normalized) return null;
-
-  return (
-    state.tickets.find((ticket) => ticket.code.toUpperCase() === normalized) ??
-    state.tickets.find((ticket) => ticket.plate.toUpperCase() === normalized) ??
-    null
-  );
-}
-
-function pickAvailableSpot(state: DemoState, requestedSpot?: string) {
-  const activeSpots = new Set(listActiveDemoTickets(state).map((ticket) => ticket.spot));
-  const reservedSpots = new Set(state.reservedSpots);
-  const normalizedRequestedSpot = requestedSpot?.trim();
-
-  if (
-    normalizedRequestedSpot &&
-    !activeSpots.has(normalizedRequestedSpot) &&
-    !reservedSpots.has(normalizedRequestedSpot)
-  ) {
-    return normalizedRequestedSpot;
+export function formatTimeLabel(value?: string | number | Date) {
+  if (!value) {
+    return nowTime();
   }
 
-  return (
-    DEMO_SPOTS.find((spot) => !activeSpots.has(spot) && !reservedSpots.has(spot)) ??
-    normalizedRequestedSpot ??
-    `Z-${String(activeSpots.size + 1).padStart(2, "0")}`
+  if (value instanceof Date) {
+    return new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(value);
+  }
+
+  if (typeof value === "number") {
+    const hours = Math.floor(value / 60);
+    const minutes = value % 60;
+    return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+  }
+
+  return value;
+}
+
+export function calculateParkingAmount(
+  durationMinutes: number,
+  pricing: DemoPricing
+) {
+  if (durationMinutes <= pricing.toleranceMinutes) {
+    return 0;
+  }
+
+  const billableMinutes = Math.max(
+    0,
+    durationMinutes - pricing.toleranceMinutes
   );
+
+  const billableHours = Math.ceil(billableMinutes / 60);
+
+  if (billableHours <= 1) {
+    return pricing.firstHour;
+  }
+
+  const amount =
+    pricing.firstHour + (billableHours - 1) * pricing.additionalHour;
+
+  return Math.min(amount, pricing.dailyRate);
+}
+
+export const defaultDemoState: DemoState = {
+  pricing: defaultPricing,
+  tickets: [
+    {
+      id: "TCK-001",
+      code: "PKF-248931",
+      plate: "DEMO001",
+      model: "Jeep Compass",
+      color: "Preto",
+      customer: "Cliente avulso",
+      entryAt: "08:20",
+      entryAtISO: "2026-05-15T08:20:00-03:00",
+      spot: "A-01",
+      yard: "Patio principal",
+      priceTable: "Tabela padrao",
+      durationMinutes: 215,
+      amount: calculateParkingAmount(215, defaultPricing),
+      status: "open",
+    },
+    {
+      id: "TCK-002",
+      code: "PKF-248932",
+      plate: "DEMO002",
+      model: "Toyota Corolla",
+      color: "Prata",
+      customer: "Mensalista",
+      entryAt: "09:10",
+      entryAtISO: "2026-05-15T09:10:00-03:00",
+      spot: "A-02",
+      yard: "Patio principal",
+      priceTable: "Tabela padrao",
+      durationMinutes: 165,
+      amount: 0,
+      status: "open",
+    },
+  ],
+  payments: [
+    {
+      id: "PAY-001",
+      ticketCode: "PKF-100111",
+      plate: "DEMO010",
+      method: "Pix",
+      amount: 35,
+      paidAt: "10:40",
+    },
+  ],
+  cashMovements: [
+    {
+      id: "MOV-001",
+      type: "Entrada",
+      description: "Pagamento ticket PKF-100111",
+      method: "Pix",
+      amount: 35,
+      time: "10:40",
+    },
+  ],
+};
+
+export function loadDemoState(): DemoState {
+  if (typeof window === "undefined") {
+    return defaultDemoState;
+  }
+
+  const saved = window.localStorage.getItem(STORAGE_KEY);
+
+  if (!saved) {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoState));
+    return defaultDemoState;
+  }
+
+  try {
+    const parsed = JSON.parse(saved) as Partial<DemoState>;
+
+    // Migrate old tickets that may be missing new fields
+    const rawTickets = parsed.tickets ?? defaultDemoState.tickets;
+    const migratedTickets = rawTickets.map((t: Partial<DemoTicket> & { entryAt: string }) => ({
+      ...t,
+      entryAtISO: t.entryAtISO ?? new Date().toISOString(),
+      spot: t.spot ?? "A-01",
+      yard: t.yard ?? "Patio principal",
+      priceTable: t.priceTable ?? "Tabela padrao",
+      durationLabel: t.durationLabel ?? undefined,
+    })) as DemoTicket[];
+
+    return {
+      ...defaultDemoState,
+      ...parsed,
+      pricing: {
+        ...defaultPricing,
+        ...(parsed.pricing ?? {}),
+      },
+      tickets: migratedTickets,
+      payments: parsed.payments ?? defaultDemoState.payments,
+      cashMovements: parsed.cashMovements ?? defaultDemoState.cashMovements,
+    };
+  } catch {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoState));
+    return defaultDemoState;
+  }
+}
+
+export function saveDemoState(state: DemoState) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  window.dispatchEvent(new Event("smartpark-demo-state-updated"));
+}
+
+export function getDemoState() {
+  return loadDemoState();
+}
+
+export function getDefaultDemoState() {
+  return defaultDemoState;
+}
+
+export function resetDemoState() {
+  saveDemoState(defaultDemoState);
+  return defaultDemoState;
+}
+
+export function resetDemoStore() {
+  return resetDemoState();
+}
+
+export function subscribeDemoStore(callback: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  function handleUpdate() {
+    callback();
+  }
+
+  window.addEventListener("smartpark-demo-state-updated", handleUpdate);
+  window.addEventListener("storage", handleUpdate);
+
+  return () => {
+    window.removeEventListener("smartpark-demo-state-updated", handleUpdate);
+    window.removeEventListener("storage", handleUpdate);
+  };
+}
+
+export function updateDemoPricing(pricing: DemoPricing) {
+  const state = loadDemoState();
+
+  const nextState: DemoState = {
+    ...state,
+    pricing,
+  };
+
+  saveDemoState(nextState);
+
+  return nextState;
 }
 
 export function createDemoTicket(input: {
@@ -550,228 +303,395 @@ export function createDemoTicket(input: {
   customer: string;
   driver?: string;
   spot?: string;
-  yard: string;
-  priceTable: string;
+  yard?: string;
+  priceTable?: string;
   notes?: string;
 }) {
-  const state = getDemoState();
+  const state = loadDemoState();
+  const now = new Date();
+
   const ticket: DemoTicket = {
-    code: makeId("PKF"),
-    plate: normalizePlate(input.plate || "DEMO000"),
-    model: input.model || "Veiculo demo",
-    color: input.color || "Prata",
-    customer: input.customer || "Cliente avulso",
-    driver: input.driver || input.customer || "Cliente avulso",
-    spot: pickAvailableSpot(state, input.spot),
-    yard: input.yard || "Patio principal",
-    priceTable: input.priceTable || "Tabela padrao",
-    entryAtISO: new Date().toISOString(),
+    id: makeId("TCK"),
+    code: makeTicketCode(),
+    plate: input.plate.toUpperCase(),
+    model: input.model,
+    color: input.color,
+    customer: input.customer,
+    entryAt: nowTime(),
+    entryAtISO: now.toISOString(),
+    spot: input.spot ?? "A-01",
+    yard: input.yard ?? "Patio principal",
+    priceTable: input.priceTable ?? "Tabela padrao",
+    durationMinutes: 0,
     amount: 0,
     status: "open",
-    notes: input.notes,
   };
 
-  writeDemoState({
+  const nextState: DemoState = {
     ...state,
-    tickets: [ticket, ...state.tickets].slice(0, 200),
-  });
+    tickets: [ticket, ...state.tickets],
+  };
 
-  return ticket;
+  saveDemoState(nextState);
+
+  return {
+    state: nextState,
+    ticket,
+  };
 }
 
-export function confirmDemoPayment(ticketCode: string, method: string) {
-  const state = getDemoState();
-  const ticket = state.tickets.find((item) => item.code === ticketCode);
-  if (!ticket) return null;
+export function findOpenDemoTicket(search: string) {
+  const state = loadDemoState();
+  const term = search.trim().toUpperCase();
 
-  const paidAtISO =
-    ticket.paidAtISO ??
-    state.payments.find((payment) => payment.ticketCode === ticket.code)?.atISO ??
-    new Date().toISOString();
-  const amount = ticket.amount > 0 ? ticket.amount : calculateDemoAmount(ticket.entryAtISO, paidAtISO);
-  const payment =
-    state.payments.find((item) => item.ticketCode === ticket.code) ?? {
-      id: makeId("PAY"),
-      ticketCode: ticket.code,
-      plate: ticket.plate,
-      method,
-      amount,
-      atISO: paidAtISO,
+  return (
+    state.tickets.find(
+      (item) =>
+        item.status === "open" &&
+        (item.plate.toUpperCase() === term ||
+          item.code.toUpperCase() === term)
+    ) ?? state.tickets.find((item) => item.status === "open") ?? null
+  );
+}
+
+export function findDemoTicket(search: string, stateOverride?: DemoState) {
+  const state = stateOverride ?? loadDemoState();
+  const term = search.trim().toUpperCase();
+
+  return (
+    state.tickets.find(
+      (item) =>
+        item.plate.toUpperCase() === term ||
+        item.code.toUpperCase() === term
+    ) ?? null
+  );
+}
+
+export function confirmDemoPayment(searchOrInput: string | {
+  search: string;
+  method: string;
+  amount?: number;
+}, methodArg?: string) {
+  const input = typeof searchOrInput === "string"
+    ? { search: searchOrInput, method: methodArg ?? "Pix" }
+    : searchOrInput;
+
+  const state = loadDemoState();
+  const term = input.search.trim().toUpperCase();
+
+  const ticket =
+    state.tickets.find(
+      (item) =>
+        item.status === "open" &&
+        (item.plate.toUpperCase() === term ||
+          item.code.toUpperCase() === term)
+    ) ?? state.tickets.find((item) => item.status === "open");
+
+  if (!ticket) {
+    return {
+      state,
+      ticket: null,
+      payment: null,
     };
-  const movement =
-    state.cashMovements.find((item) => item.source === "ticket" && item.ticketCode === ticket.code) ?? {
-      id: makeId("MOV"),
-      type: "Entrada" as const,
-      description: `Pagamento ticket ${ticket.code}`,
-      method,
-      amount,
-      atISO: paidAtISO,
-      source: "ticket" as const,
-      ticketCode: ticket.code,
-    };
+  }
+
+  const durationMinutes = ticket.durationMinutes || 215;
+
+  const fallbackAmount =
+    ticket.amount > 0
+      ? ticket.amount
+      : calculateParkingAmount(durationMinutes, state.pricing);
+
+  const amount = input.amount ?? fallbackAmount;
+
   const updatedTicket: DemoTicket = {
     ...ticket,
-    status: "paid",
     amount,
-    durationLabel: formatDurationLabel(ticket.entryAtISO, paidAtISO),
-    paymentMethod: method,
-    paidAtISO,
+    durationMinutes,
+    status: "paid",
   };
-  const nextState = writeDemoState({
+
+  const payment: DemoPayment = {
+    id: makeId("PAY"),
+    ticketCode: updatedTicket.code,
+    plate: updatedTicket.plate,
+    method: input.method,
+    amount,
+    paidAt: nowTime(),
+  };
+
+  const movement: DemoCashMovement = {
+    id: makeId("MOV"),
+    type: "Entrada",
+    description: `Pagamento ticket ${updatedTicket.code}`,
+    method: input.method,
+    amount,
+    time: payment.paidAt,
+  };
+
+  const nextState: DemoState = {
     ...state,
-    tickets: state.tickets.map((item) => (item.code === ticket.code ? updatedTicket : item)),
-    payments: state.payments.some((item) => item.ticketCode === ticket.code)
-      ? state.payments.map((item) =>
-          item.ticketCode === ticket.code ? { ...item, method, amount, atISO: paidAtISO } : item
-        )
-      : [{ ...payment, method, amount, atISO: paidAtISO }, ...state.payments],
-    cashMovements: state.cashMovements.some(
-      (item) => item.source === "ticket" && item.ticketCode === ticket.code
-    )
-      ? state.cashMovements.map((item) =>
-          item.source === "ticket" && item.ticketCode === ticket.code
-            ? { ...item, method, amount, atISO: paidAtISO }
-            : item
-        )
-      : [{ ...movement, method, amount, atISO: paidAtISO }, ...state.cashMovements],
-  });
+    tickets: state.tickets.map((item) =>
+      item.id === ticket.id ? updatedTicket : item
+    ),
+    payments: [payment, ...state.payments],
+    cashMovements: [movement, ...state.cashMovements],
+  };
+
+  saveDemoState(nextState);
 
   return {
     state: nextState,
     ticket: updatedTicket,
-    payment: { ...payment, method, amount, atISO: paidAtISO },
-    movement: { ...movement, method, amount, atISO: paidAtISO },
+    payment,
   };
 }
 
-export function releaseDemoExit(ticketCode: string) {
-  const state = getDemoState();
-  const ticket = state.tickets.find((item) => item.code === ticketCode);
-  if (!ticket) return null;
+export function confirmDemoExit(search: string) {
+  const state = loadDemoState();
+  const term = search.trim().toUpperCase();
 
-  const exitAtISO = ticket.exitAtISO ?? new Date().toISOString();
+  const ticket =
+    state.tickets.find(
+      (item) =>
+        (item.status === "paid" || item.status === "open") &&
+        (item.plate.toUpperCase() === term ||
+          item.code.toUpperCase() === term)
+    ) ?? state.tickets.find((item) => item.status === "paid");
+
+  if (!ticket) {
+    return {
+      state,
+      ticket: null,
+    };
+  }
+
   const updatedTicket: DemoTicket = {
     ...ticket,
     status: "exited",
-    exitAtISO,
-    durationLabel: formatDurationLabel(ticket.entryAtISO, exitAtISO),
-    amount: ticket.amount > 0 ? ticket.amount : calculateDemoAmount(ticket.entryAtISO, exitAtISO),
   };
-  const nextState = writeDemoState({
-    ...state,
-    tickets: state.tickets.map((item) => (item.code === ticket.code ? updatedTicket : item)),
-  });
 
-  return { state: nextState, ticket: updatedTicket };
+  const nextState: DemoState = {
+    ...state,
+    tickets: state.tickets.map((item) =>
+      item.id === ticket.id ? updatedTicket : item
+    ),
+  };
+
+  saveDemoState(nextState);
+
+  return {
+    state: nextState,
+    ticket: updatedTicket,
+  };
+}
+
+export function releaseDemoExit(search: string) {
+  return confirmDemoExit(search);
 }
 
 export function addDemoCashMovement(input: {
-  type: DemoCashMovementType;
+  type: "Entrada" | "Saída";
   description: string;
   method: string;
   amount: number;
 }) {
-  const state = getDemoState();
+  const state = loadDemoState();
+
   const movement: DemoCashMovement = {
     id: makeId("MOV"),
     type: input.type,
     description: input.description,
     method: input.method,
     amount: input.amount,
-    atISO: new Date().toISOString(),
-    source: "manual",
+    time: nowTime(),
   };
-  const nextState = writeDemoState({
+
+  const nextState: DemoState = {
     ...state,
-    cashMovements: [movement, ...state.cashMovements].slice(0, 300),
-  });
+    cashMovements: [movement, ...state.cashMovements],
+  };
 
-  return { state: nextState, movement };
+  saveDemoState(nextState);
+
+  return {
+    state: nextState,
+    movement,
+  };
 }
 
-export function createDemoPatioEntry() {
-  const state = getDemoState();
-  const maxDemoNumber = state.tickets.reduce((max, ticket) => {
-    const match = ticket.plate.match(/^DEMO(\d+)$/);
-    return match ? Math.max(max, Number(match[1])) : max;
-  }, 3);
-  const nextNumber = maxDemoNumber + 1;
-  const vehicle = demoModels[nextNumber % demoModels.length];
+export function calculateDemoTotals(state: DemoState) {
+  const revenue = state.payments.reduce((sum, item) => sum + item.amount, 0);
 
-  return createDemoTicket({
-    plate: `DEMO${String(nextNumber).padStart(3, "0")}`,
-    model: vehicle.model,
-    color: vehicle.color,
-    customer: "Cliente avulso",
-    driver: "Cliente avulso",
-    yard: "Patio principal",
-    priceTable: "Tabela padrao",
-  });
+  const openTickets = state.tickets.filter(
+    (item) => item.status === "open"
+  ).length;
+
+  const paidTickets = state.tickets.filter(
+    (item) => item.status === "paid"
+  ).length;
+
+  const exitedTickets = state.tickets.filter(
+    (item) => item.status === "exited"
+  ).length;
+
+  const cashIn = state.cashMovements
+    .filter((item) => item.type === "Entrada")
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  const cashOut = state.cashMovements
+    .filter((item) => item.type === "Saída")
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  return {
+    revenue,
+    openTickets,
+    paidTickets,
+    exitedTickets,
+    totalTickets: state.tickets.length,
+    cashIn,
+    cashOut,
+    cashBalance: cashIn - cashOut,
+    occupancy: Math.min(100, Math.max(0, openTickets * 18)),
+  };
 }
 
-export function getDemoPatioSpots(state = getDemoState()): DemoPatioSpot[] {
-  const occupied = listActiveDemoTickets(state).map((ticket) => ({
-    spot: ticket.spot,
-    plate: ticket.plate,
-    model: ticket.model,
-    customer: ticket.customer,
-    entryAt: formatTimeLabel(ticket.entryAtISO),
-    duration: ticket.durationLabel || formatDurationLabel(ticket.entryAtISO, new Date().toISOString()),
-    status: "Ocupada" as const,
-    ticketCode: ticket.code,
-  }));
-  const usedSpots = new Set(occupied.map((item) => item.spot));
-  const reserved = state.reservedSpots.map((spot) => ({
-    spot,
-    plate: "RESERVA",
-    model: "Vaga mensalista",
-    customer: "Contrato ativo",
-    entryAt: "-",
-    duration: "-",
-    status: "Reservada" as const,
-  }));
+export function getDemoDashboardTotals(state: DemoState) {
+  const totals = calculateDemoTotals(state);
+  return {
+    revenue: totals.revenue,
+    tickets: totals.totalTickets,
+    exits: totals.exitedTickets,
+    cancelled: 2, // demonstrativo
+    balance: totals.cashBalance,
+    occupancy: totals.occupancy,
+    activeVehicles: totals.openTickets
+  };
+}
 
-  reserved.forEach((item) => usedSpots.add(item.spot));
+export type DemoCashMovementType = DemoCashMovement["type"];
 
-  const free = DEMO_SPOTS.filter((spot) => !usedSpots.has(spot))
-    .slice(0, Math.max(0, state.totalSpots - occupied.length - reserved.length))
-    .map((spot) => ({
+export function calculateDemoAmount(
+  ticketOrMinutes: DemoTicket | number | string,
+  pricingOrIso?: DemoPricing | string
+) {
+  // Handle (entryAtISO: string) pattern from exit-operations-client
+  if (typeof ticketOrMinutes === "string") {
+    const entry = new Date(ticketOrMinutes);
+    const exit = pricingOrIso && typeof pricingOrIso === "string" ? new Date(pricingOrIso) : new Date();
+    const deltaMs = Math.max(0, exit.getTime() - entry.getTime());
+    const durationMinutes = Math.floor(deltaMs / 60000);
+    return calculateParkingAmount(durationMinutes, loadDemoState().pricing);
+  }
+
+  const pricing = (pricingOrIso && typeof pricingOrIso !== "string") ? pricingOrIso : loadDemoState().pricing;
+  const durationMinutes =
+    typeof ticketOrMinutes === "number"
+      ? ticketOrMinutes
+      : ticketOrMinutes.durationMinutes || 215;
+
+  return calculateParkingAmount(durationMinutes, pricing);
+}
+
+export function formatDurationLabel(minutesOrIso: number | string, exitIso?: string) {
+  if (typeof minutesOrIso === "string") {
+    const entry = new Date(minutesOrIso);
+    const exit = exitIso ? new Date(exitIso) : new Date();
+    const deltaMs = Math.max(0, exit.getTime() - entry.getTime());
+    const totalMinutes = Math.floor(deltaMs / 60000);
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}h ${String(m).padStart(2, "0")}m`;
+  }
+  return formatTimeLabel(minutesOrIso);
+}
+
+export function getDemoTicketStatusLabel(status: DemoTicketStatus) {
+  const labels: Record<DemoTicketStatus, string> = {
+    open: "Em aberto",
+    paid: "Pago",
+    exited: "Saída liberada",
+  };
+
+  return labels[status] ?? "Indefinido";
+}
+
+// --- Patio support ---
+
+export type DemoPatioSpot = {
+  spot: string;
+  status: "Ocupada" | "Livre" | "Reservada";
+  plate: string;
+  model: string;
+  customer: string;
+  entryAt: string;
+  duration: string;
+  ticketCode: string | null;
+};
+
+const defaultSpots = [
+  "A-01", "A-02", "A-03", "A-04", "A-05", "A-06",
+  "B-01", "B-02", "B-03", "B-04", "B-05", "B-06",
+];
+
+export function getDemoPatioSpots(state: DemoState): DemoPatioSpot[] {
+  const openTickets = state.tickets.filter((t) => t.status === "open");
+
+  return defaultSpots.map((spot, index) => {
+    const ticket = openTickets[index] ?? null;
+    if (ticket) {
+      const mins = ticket.durationMinutes || 0;
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return {
+        spot,
+        status: "Ocupada" as const,
+        plate: ticket.plate,
+        model: ticket.model,
+        customer: ticket.customer,
+        entryAt: ticket.entryAt,
+        duration: `${h}h ${String(m).padStart(2, "0")}m`,
+        ticketCode: ticket.code,
+      };
+    }
+
+    return {
       spot,
+      status: "Livre" as const,
       plate: "-",
-      model: "Disponivel",
+      model: "-",
       customer: "-",
       entryAt: "-",
       duration: "-",
-      status: "Livre" as const,
-    }));
-
-  const order = new Map(DEMO_SPOTS.map((spot, index) => [spot, index]));
-
-  return [...occupied, ...free, ...reserved].sort((left, right) => {
-    return (order.get(left.spot) ?? 999) - (order.get(right.spot) ?? 999);
+      ticketCode: null,
+    };
   });
 }
 
-export function getDemoDashboardTotals(state = getDemoState()): DemoDashboardTotals {
-  const activeVehicles = listActiveDemoTickets(state).length;
-  const cashIn = state.cashMovements
-    .filter((movement) => movement.type === "Entrada")
-    .reduce((sum, movement) => sum + movement.amount, 0);
-  const cashOut = state.cashMovements
-    .filter((movement) => movement.type === "Saída")
-    .reduce((sum, movement) => sum + movement.amount, 0);
-  const availableSpots = Math.max(0, state.totalSpots - state.reservedSpots.length);
+export function createDemoPatioEntry() {
+  const plates = ["SIM001", "SIM002", "SIM003", "SIM004", "SIM005"];
+  const models = ["Fiat Argo", "VW Polo", "Chevrolet Onix", "Hyundai HB20", "Renault Kwid"];
+  const colors = ["Branco", "Preto", "Prata", "Vermelho", "Azul"];
+  const idx = Math.floor(Math.random() * plates.length);
+
+  const result = createDemoTicket({
+    plate: plates[idx],
+    model: models[idx],
+    color: colors[idx],
+    customer: "Cliente avulso",
+  });
+
+  const state = getDemoState();
+  const spots = getDemoPatioSpots(state);
+  const freeSpot = spots.find((s) => s.status === "Livre");
 
   return {
-    revenue: cashIn,
-    tickets: state.tickets.length,
-    occupancy: availableSpots > 0 ? Math.round((activeVehicles / availableSpots) * 100) : 0,
-    exits: state.tickets.filter((ticket) => ticket.status === "exited").length,
-    cancelled: state.tickets.filter((ticket) => ticket.status === "cancelled").length,
-    activeVehicles,
-    freeSpots: Math.max(0, availableSpots - activeVehicles),
-    cashIn,
-    cashOut,
-    balance: cashIn - cashOut,
+    code: result.ticket.code,
+    plate: result.ticket.plate,
+    spot: freeSpot?.spot ?? "A-01",
   };
+}
+
+export function listDemoTickets(): DemoTicket[] {
+  return loadDemoState().tickets;
 }
