@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 type ReportItem = {
@@ -29,12 +30,12 @@ const initialReports: ReportItem[] = [
     description: "Media de ocupacao, vagas livres e horarios de pico.",
   },
   {
-    id: "REL-003",
-    title: "Tickets por operador",
-    period: "Mes atual",
-    status: "Agendado",
-    total: "426 tickets",
-    description: "Produtividade por operador, entradas e saidas registradas.",
+    id: "SIN-DEMO001",
+    title: "Relatorio de sinistro",
+    period: "Entrada atual",
+    status: "Pronto",
+    total: "3 avarias",
+    description: "Analise visual de avarias externas por cameras.",
   },
 ];
 
@@ -64,7 +65,7 @@ export default function RelatoriosPage() {
       receita: "R$ 2.840,00",
       tickets: "126",
       ocupacao: "78%",
-      cancelamentos: "3",
+      sinistros: "3",
     };
   }, []);
 
@@ -79,7 +80,9 @@ export default function RelatoriosPage() {
           ? "R$ 2.840,00"
           : reportType === "Operacional"
             ? "126 tickets"
-            : "78%",
+            : reportType === "Sinistro"
+              ? "3 avarias"
+              : "78%",
       description: `Relatorio demonstrativo de ${reportType.toLowerCase()} para o periodo ${period}.`,
     };
 
@@ -101,17 +104,19 @@ export default function RelatoriosPage() {
 
   return (
     <div className="space-y-6">
-      <section className="surface rounded-3xl p-6">
+      <section className="surface rounded-3xl p-4 lg:p-6">
         <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
           Relatorios gerenciais
         </p>
 
         <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold">Central de relatorios</h1>
+            <h1 className="text-2xl font-semibold lg:text-3xl">
+              Central de relatorios
+            </h1>
             <p className="mt-2 max-w-3xl text-sm text-slate-500">
               Painel demonstrativo para relatorios financeiros, operacionais,
-              ocupacao do patio, tickets, operadores e fechamento de caixa.
+              ocupacao do patio, tickets, operadores, fechamento de caixa e sinistros.
             </p>
           </div>
 
@@ -137,14 +142,54 @@ export default function RelatoriosPage() {
             <p className="mt-2 text-2xl font-bold">{totals.ocupacao}</p>
           </div>
           <div className="rounded-2xl border p-4">
-            <p className="text-sm text-slate-500">Cancelamentos</p>
-            <p className="mt-2 text-2xl font-bold">{totals.cancelamentos}</p>
+            <p className="text-sm text-slate-500">Sinistros</p>
+            <p className="mt-2 text-2xl font-bold">{totals.sinistros}</p>
           </div>
         </div>
       </section>
 
+      <section className="surface rounded-3xl border border-cyan-400/30 bg-cyan-500/10 p-4 lg:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">
+              Novo modulo
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              Relatorio de Sinistro
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm text-slate-400">
+              Cameras registram o veiculo na entrada por todos os lados e geram
+              analise de avarias externas, como arranhoes, amassados, pneus furados,
+              trincas, farois quebrados e danos aparentes.
+            </p>
+          </div>
+
+          <Link
+            href="/relatorios/sinistro"
+            className="rounded-2xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
+          >
+            Acessar Sinistro
+          </Link>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-4">
+          <p className="rounded-2xl border border-cyan-400/20 p-4 text-sm">
+            ✓ Camera frontal
+          </p>
+          <p className="rounded-2xl border border-cyan-400/20 p-4 text-sm">
+            ✓ Camera traseira
+          </p>
+          <p className="rounded-2xl border border-cyan-400/20 p-4 text-sm">
+            ✓ Laterais esquerda/direita
+          </p>
+          <p className="rounded-2xl border border-cyan-400/20 p-4 text-sm">
+            ✓ PDF de sinistro
+          </p>
+        </div>
+      </section>
+
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <section className="surface rounded-3xl p-6">
+        <section className="surface rounded-3xl p-4 lg:p-6">
           <h2 className="text-xl font-semibold">Filtros do relatorio</h2>
           <p className="mt-1 text-sm text-slate-500">
             Selecione o tipo e o periodo para simular a emissao do relatorio.
@@ -162,6 +207,7 @@ export default function RelatoriosPage() {
               <option>Operadores</option>
               <option>Mensalistas</option>
               <option>Caixa</option>
+              <option>Sinistro</option>
             </select>
 
             <select
@@ -211,7 +257,7 @@ export default function RelatoriosPage() {
           ) : null}
         </section>
 
-        <section className="surface rounded-3xl p-6">
+        <section className="surface rounded-3xl p-4 lg:p-6">
           <h2 className="text-xl font-semibold">Receita da semana</h2>
           <p className="mt-1 text-sm text-slate-500">
             Grafico demonstrativo de desempenho financeiro.
@@ -236,7 +282,7 @@ export default function RelatoriosPage() {
         </section>
       </div>
 
-      <section className="surface rounded-3xl p-6">
+      <section className="surface rounded-3xl p-4 lg:p-6">
         <h2 className="text-xl font-semibold">Relatorios recentes</h2>
         <p className="mt-1 text-sm text-slate-500">
           Historico demonstrativo dos ultimos relatorios gerados.
