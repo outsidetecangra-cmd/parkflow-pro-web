@@ -57,7 +57,7 @@ export default function PatioPage() {
   }
 
   function handleRefresh() {
-    refreshFromStore(selectedSpot.ticketCode);
+    refreshFromStore(selectedSpot.ticketCode ?? undefined);
     setMessage("Mapa do pátio atualizado em modo demonstração.");
   }
 
