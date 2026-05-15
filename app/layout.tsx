@@ -1,5 +1,6 @@
 ﻿import "./globals.css";
 
+import { AppSplash } from "@/components/app-splash";
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, Manrope } from "next/font/google";
 import { ReactNode } from "react";
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR" className="dark">
       <body className={`${bodyFont.variable} ${headingFont.variable} font-sans`}>
+        <AppSplash />
         {children}
       </body>
     </html>

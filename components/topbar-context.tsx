@@ -24,14 +24,14 @@ import {
 } from "@/lib/api";
 
 const mobileLinks = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, match: "/dashboard" },
+  { href: "/dashboard", label: "Dash", icon: LayoutDashboard, match: "/dashboard" },
   { href: "/operacao/entrada", label: "Entrada", icon: CarFront, match: "/operacao/entrada" },
   { href: "/operacao/saida", label: "Saída", icon: CarFront, match: "/operacao/saida" },
   { href: "/caixa", label: "Caixa", icon: Wallet, match: "/caixa" },
-  { href: "/mensalistas", label: "Mensalistas", icon: Users, match: "/mensalistas" },
-  { href: "/automacao/equipamentos", label: "Automação", icon: Radar, match: "/automacao" },
+  { href: "/mensalistas", label: "Mensal", icon: Users, match: "/mensalistas" },
+  { href: "/automacao/equipamentos", label: "Auto", icon: Radar, match: "/automacao" },
   { href: "/erp/financeiro", label: "ERP", icon: Building2, match: "/erp" },
-  { href: "/relatorios", label: "Relatórios", icon: FileBarChart2, match: "/relatorios" },
+  { href: "/relatorios", label: "Relat.", icon: FileBarChart2, match: "/relatorios" },
   { href: "/admin/configuracoes", label: "Admin", icon: Settings, match: "/admin" },
 ];
 
@@ -58,8 +58,29 @@ export function TopbarContext() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[hsl(var(--border))] bg-white/85 px-2 py-1.5 backdrop-blur dark:bg-slate-950/95 lg:static lg:px-6 lg:py-4">
-      <div className="flex flex-col gap-1.5 lg:gap-4">
+    <>
+      <nav className="fixed left-0 top-0 z-40 flex h-screen w-[62px] flex-col gap-1 overflow-y-auto border-r border-white/10 bg-slate-950/95 px-1.5 py-2 backdrop-blur lg:hidden">
+        {mobileLinks.map(({ href, label, icon: Icon, match }) => {
+          const active = isRouteActive(pathname, match);
+
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex min-h-[48px] flex-col items-center justify-center rounded-xl border px-1 py-1 text-center text-[8px] font-medium leading-none transition ${
+                active
+                  ? "border-cyan-400/70 bg-cyan-500/25 text-white"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+              }`}
+            >
+              <Icon className="mb-1 h-3.5 w-3.5" />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <header className="sticky top-0 z-30 border-b border-[hsl(var(--border))] bg-white/85 px-3 py-2 backdrop-blur dark:bg-slate-950/95 lg:static lg:px-6 lg:py-4">
         <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="hidden text-xs uppercase tracking-[0.3em] text-slate-500 lg:block">
@@ -96,28 +117,7 @@ export function TopbarContext() {
             </button>
           </div>
         </div>
-
-        <div className="grid grid-cols-3 gap-1 lg:hidden">
-          {mobileLinks.map(({ href, label, icon: Icon, match }) => {
-            const active = isRouteActive(pathname, match);
-
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex min-h-[34px] flex-col items-center justify-center rounded-lg border px-1 py-1 text-center text-[8px] font-medium leading-none transition ${
-                  active
-                    ? "border-cyan-400/60 bg-cyan-500/20 text-white"
-                    : "border-white/10 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <Icon className="mb-0.5 h-3 w-3" />
-                <span className="leading-none">{label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }

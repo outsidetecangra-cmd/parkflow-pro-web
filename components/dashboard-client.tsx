@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -137,36 +137,36 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-6">
-      <section className="surface rounded-3xl p-6">
+      <section className="surface rounded-3xl p-4 lg:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
               Visao unificada da operacao
             </p>
-            <h1 className="mt-3 text-3xl font-semibold">Dashboard operacional</h1>
+            <h1 className="mt-3 text-2xl font-semibold lg:text-3xl">Dashboard operacional</h1>
             <p className="mt-2 max-w-3xl text-sm text-slate-500">
               Painel demonstrativo com filtros funcionais para periodo, unidade,
               patio e operador.
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-[1fr_auto] lg:flex lg:w-auto">
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar ticket, placa ou operador"
-              className="w-64 rounded-2xl border bg-transparent px-4 py-3 text-sm"
+              className="w-full min-w-0 rounded-2xl border bg-transparent px-4 py-3 text-sm lg:w-64"
             />
             <button
               onClick={handleSearch}
-              className="rounded-2xl border px-5 py-3 text-sm hover:bg-white/10"
+              className="w-full rounded-2xl border px-5 py-3 text-sm hover:bg-white/10 sm:w-auto"
             >
               Buscar
             </button>
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:gap-3">
           {(["Hoje", "Ontem", "Semana", "Mes", "Periodo personalizado"] as PeriodKey[]).map(
             (item) => (
               <button
@@ -199,7 +199,7 @@ export function DashboardClient() {
 
           <button
             onClick={handleRefresh}
-            className="rounded-full border px-5 py-3 text-sm hover:bg-white/10"
+            className="rounded-full border px-3 py-2 text-xs hover:bg-white/10 lg:px-5 lg:py-3 lg:text-sm"
           >
             Atualizar
           </button>
@@ -212,7 +212,7 @@ export function DashboardClient() {
         ) : null}
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <MetricCard
           label="Receita"
           value={formatCurrency(data.revenue)}
@@ -240,8 +240,8 @@ export function DashboardClient() {
         />
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <section className="surface rounded-3xl p-6">
+      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <section className="surface rounded-3xl p-4 lg:p-6">
           <h2 className="text-xl font-semibold">Fluxo operacional</h2>
           <p className="mt-1 text-sm text-slate-500">
             Grafico demonstrativo atualizado pelos filtros selecionados.
@@ -265,14 +265,14 @@ export function DashboardClient() {
           </div>
         </section>
 
-        <section className="surface rounded-3xl p-6">
+        <section className="surface rounded-3xl p-4 lg:p-6">
           <h2 className="text-xl font-semibold">Contexto operacional</h2>
           <p className="mt-1 text-sm text-slate-500">{viewDescriptions[view]}</p>
 
           <div className="mt-5 space-y-3">
             {alerts.map((alert) => (
               <p key={alert} className="rounded-2xl border p-3 text-sm">
-                ✓ {alert}
+                âœ“ {alert}
               </p>
             ))}
           </div>
@@ -280,13 +280,13 @@ export function DashboardClient() {
           <div className="mt-6 rounded-3xl border p-5">
             <p className="text-sm text-slate-500">Filtro aplicado</p>
             <p className="mt-2 text-2xl font-semibold">
-              {period} · {view}
+              {period} Â· {view}
             </p>
           </div>
         </section>
       </div>
 
-      <section className="surface rounded-3xl p-6">
+      <section className="surface rounded-3xl p-4 lg:p-6">
         <h2 className="text-xl font-semibold">Atalhos da apresentacao</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-4">
           <a className="rounded-2xl border p-4 hover:bg-white/10" href="/operacao/entrada">
@@ -306,3 +306,5 @@ export function DashboardClient() {
     </div>
   );
 }
+
+
