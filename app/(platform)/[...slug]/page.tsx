@@ -1,4 +1,4 @@
-import { AuditTimeline } from "@/components/audit-timeline";
+﻿import { AuditTimeline } from "@/components/audit-timeline";
 import { DataTable } from "@/components/data-table";
 import { KioskLayout } from "@/components/kiosk-layout";
 import { LprCaptureCard } from "@/components/lpr-capture-card";
@@ -11,10 +11,22 @@ import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 
+const directRoutes = new Set([
+  "admin/configuracoes",
+  "automacao/equipamentos",
+  "caixa",
+  "erp/financeiro",
+  "mensalistas",
+  "operacao/patio",
+  "relatorios",
+]);
+
 export function generateStaticParams() {
-  return Object.keys(genericRoutes).map((key) => ({
-    slug: key.split("/"),
-  }));
+  return Object.keys(genericRoutes)
+    .filter((key) => !directRoutes.has(key))
+    .map((key) => ({
+      slug: key.split("/"),
+    }));
 }
 
 type GenericModulePageProps = {
@@ -25,6 +37,11 @@ type GenericModulePageProps = {
 
 export default function GenericModulePage({ params }: GenericModulePageProps) {
   const key = (params.slug ?? []).join("/");
+
+  if (directRoutes.has(key)) {
+    notFound();
+  }
+
   const config = genericRoutes[key];
 
   if (!config) {
