@@ -18,8 +18,7 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "src/*": ["src/*"],
-      "@prisma/client": ["../../node_modules/@prisma/client"]
+      "src/*": ["src/*"]
     }
   },
   "include": ["src/**/*"],

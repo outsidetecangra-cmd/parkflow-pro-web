@@ -18,7 +18,21 @@ async function bootstrap() {
     .filter(Boolean);
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      try {
+        const { hostname } = new URL(origin);
+        if (hostname === "vercel.app" || hostname.endsWith(".vercel.app")) {
+          return callback(null, true);
+        }
+      } catch {
+        // ignore URL parse errors
+      }
+
+      return callback(new Error("Not allowed by CORS"), false);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
