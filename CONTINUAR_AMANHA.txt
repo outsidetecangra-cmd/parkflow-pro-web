@@ -1,0 +1,33 @@
+COPIE E COLE QUANDO EU VOLTAR (RETOMAR DEPLOY / CORRIGIR PREÇOS 405)
+
+Contexto rápido:
+- Projeto no Vercel: https://parkflow-pro-web-o3pw.vercel.app
+- DB agora é Neon (não Supabase).
+- O erro na tela /admin/precos era “Resposta inválida da API (405)”.
+- Já deixei o endpoint aceitar PUT/POST/PATCH e o front salvar via POST.
+- Falta só COMMIT + PUSH no seu PowerShell (fora do Codex) para o Vercel redeployar.
+
+PASSOS (PowerShell):
+cd "D:\app estacionamento\app estacionamento 2"
+
+# (opcional) dependências
+npm ci
+
+# build local (se travar, PULE e deixe o Vercel buildar)
+npm run build
+
+# commit + push (dispara deploy no Vercel)
+git add app/api/pricing/route.ts lib/api.ts
+git commit -m "Fix: salvar precos via POST e aceitar PUT/POST/PATCH"
+git push
+
+TESTE (depois do deploy no Vercel terminar):
+1) Abrir https://parkflow-pro-web-o3pw.vercel.app/admin/precos
+2) Clicar “Salvar Configurações”
+3) Não pode aparecer 405
+
+SE AINDA DER ERRO:
+- Abrir DevTools (F12) > Network
+- Clicar “Salvar Configurações”
+- Abrir o request “/api/pricing” e mandar print com: Method + Status + Response.
+

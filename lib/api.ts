@@ -359,7 +359,7 @@ export async function updatePricingConfigs(input: {
 }) {
   const url = typeof window === "undefined" ? `${API_BASE_URL}/pricing` : "/api/pricing";
   const response = await fetch(url, {
-    method: "PUT",
+    method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input)
   });

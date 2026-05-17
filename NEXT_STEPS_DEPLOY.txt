@@ -1,0 +1,26 @@
+PASSO A PASSO (retomar depois) — Vercel + Neon + Pricing 405
+
+1) Abrir PowerShell e ir para o projeto:
+   cd "D:\app estacionamento\app estacionamento 2"
+
+2) (Opcional) instalar deps:
+   npm ci
+
+3) Build local (se travar, pule e deixe o Vercel buildar):
+   npm run build
+
+4) Commit + push das correções (isso dispara deploy no Vercel):
+   git add app/api/pricing/route.ts lib/api.ts
+   git commit -m "Fix: salvar precos via POST e aceitar PUT/POST/PATCH"
+   git push
+
+5) Após o deploy finalizar no Vercel:
+   - abrir: https://parkflow-pro-web-o3pw.vercel.app/admin/precos
+   - clicar: "Salvar Configurações"
+   - NÃO deve aparecer "Resposta inválida da API (405)"
+
+Se ainda aparecer 405:
+   - abrir DevTools (F12) > Network
+   - clicar "Salvar Configurações"
+   - clicar no request /api/pricing e capturar print mostrando Method + Status + Response.
+
