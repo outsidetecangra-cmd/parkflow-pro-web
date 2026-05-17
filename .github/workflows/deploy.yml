@@ -37,7 +37,13 @@ jobs:
           GITHUB_PAGES: "true"
 
       - name: Garantir .nojekyll
-        run: touch out/.nojekyll
+        run: |
+          if [ ! -d out ]; then
+            echo "Pasta out/ não encontrada. Confira se o build está em modo static export (output: 'export')." >&2
+            ls -la
+            exit 1
+          fi
+          touch out/.nojekyll
 
       - name: Enviar arquivos para GitHub Pages
         uses: actions/upload-pages-artifact@v3
