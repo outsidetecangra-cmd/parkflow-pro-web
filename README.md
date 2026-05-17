@@ -67,21 +67,28 @@ npm install
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/parkflow"
+DIRECT_URL="postgresql://postgres:postgres@localhost:5432/parkflow"
 ```
 
-3. Gere o client Prisma:
+3. Suba o Postgres local (recomendado):
+
+```bash
+docker compose up -d
+```
+
+4. Gere o client Prisma:
 
 ```bash
 npm run prisma:generate
 ```
 
-4. Rode a seed:
+5. Rode a seed:
 
 ```bash
 npm run prisma:seed
 ```
 
-5. Inicie em desenvolvimento:
+6. Inicie em desenvolvimento:
 
 ```bash
 npm run dev
@@ -128,7 +135,7 @@ Ja preparado:
 
 Bloqueio atual:
 
-- nao existe PostgreSQL ativo em `localhost:5432`
+- se nÃ£o houver PostgreSQL ativo em `localhost:5432` (use `docker compose up -d`)
 
 Sem isso:
 
@@ -139,6 +146,10 @@ Sem isso:
 ## Deploy (Supabase + Render + Vercel)
 
 Guia direto: `docs/deploy.md`.
+
+Alternativa free (sem Render, focado em precificaÃ§Ã£o): `docs/deploy-free-no-render.md`.
+
+Deploy completo (sem Render): `docs/deploy-vercel-supabase-full.md`.
 
 ## O que esta implementado
 

@@ -5,6 +5,9 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Usado por migrations e introspecção (evita limitações do PgBouncer/pooler).
+  // Em produção (ex.: Supabase), mantenha `DATABASE_URL` no pooler e `DIRECT_URL` na conexão direta.
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserStatus {

@@ -1,6 +1,9 @@
 import { TicketView } from "@/lib/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001/api";
+const API_BASE_URL =
+  typeof window === "undefined"
+    ? (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001/api")
+    : (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api");
 const STORAGE_KEY = "parkflow.session";
 
 export type StoredSession = {
