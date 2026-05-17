@@ -32,6 +32,7 @@ const mobileLinks = [
   { href: "/automacao/equipamentos", label: "Auto", icon: Radar, match: "/automacao" },
   { href: "/erp/financeiro", label: "ERP", icon: Building2, match: "/erp" },
   { href: "/relatorios", label: "Relat.", icon: FileBarChart2, match: "/relatorios" },
+  { href: "/admin/precos", label: "Preços", icon: Wallet, match: "/admin/precos" },
   { href: "/admin/configuracoes", label: "Admin", icon: Settings, match: "/admin" },
 ];
 

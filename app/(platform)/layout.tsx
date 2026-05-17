@@ -13,16 +13,6 @@ export default function PlatformLayout({ children }: { children: ReactNode }) {
         <main className="min-w-0 flex-1 space-y-4 overflow-x-hidden p-3 lg:space-y-6 lg:p-6">
           {children}
         </main>
-
-        <footer className="border-t border-white/10 px-4 py-4 text-center text-xs text-slate-500 lg:px-6">
-          <a
-            href="#"
-            className="transition hover:text-cyan-300"
-            title="Dev. por WeBiFy Soluções"
-          >
-            Dev. por WeBiFy Soluções
-          </a>
-        </footer>
       </div>
     </div>
   );

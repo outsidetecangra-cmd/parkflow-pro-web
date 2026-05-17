@@ -2,18 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-const basePath = process.env.NODE_ENV === "production" ? "/parkflow-pro-web" : "";
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const slides = [
   {
     src: `${basePath}/smartpark-logo.png`,
     alt: "SmartPark",
     label: "SmartPark",
-  },
-  {
-    src: `${basePath}/logo-webify.jpeg`,
-    alt: "WeBiFy Soluções",
-    label: "Dev. por WeBiFy Soluções",
   },
 ];
 

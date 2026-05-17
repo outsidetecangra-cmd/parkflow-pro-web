@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const basePath = process.env.NODE_ENV === "production" ? "/parkflow-pro-web" : "";
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -92,19 +92,7 @@ export default function LoginPage() {
           <p>Senha: 123456</p>
         </div>
 
-        <div className="mt-6 border-t border-white/10 pt-5 text-center">
-          <p className="mb-3 text-xs uppercase tracking-[0.25em] text-slate-400">
-            Dev. por WeBiFy Soluções
-          </p>
-
-          <Image
-            src={`${basePath}/logo-webify.jpeg`}
-            alt="WeBiFy Soluções"
-            width={220}
-            height={120}
-            className="mx-auto h-auto w-44 rounded-2xl object-contain"
-          />
-        </div>
+        <div className="mt-6 border-t border-white/10 pt-5" />
       </section>
     </main>
   );
