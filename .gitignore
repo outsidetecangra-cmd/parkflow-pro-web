@@ -1,5 +1,6 @@
 ﻿node_modules/
 .next/
+.next-build/
 out/
 .env
 .env.local
@@ -7,6 +8,10 @@ out/
 .vercel/
 .DS_Store
 *.log
+codex-*.log
+logs-codex.pdf
+codex-log-pages/
+.npm-cache/
 
 apps/api/dist/
 

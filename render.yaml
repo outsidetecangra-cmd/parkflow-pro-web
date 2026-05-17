@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: parkflow-api
+    runtime: node
+    rootDir: apps/api
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run prisma:generate && npm run build
+    startCommand: npm run start:render
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      # Defina no painel do Render (não versionar valores reais):
+      # - DATABASE_URL (Supabase pooler/pgbouncer)
+      # - DIRECT_URL (Supabase direto p/ migrations)
+      # - JWT_SECRET
+      # - CORS_ORIGIN (domínio do Vercel + localhost se precisar)

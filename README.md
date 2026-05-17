@@ -136,6 +136,10 @@ Sem isso:
 - `prisma migrate` e `prisma:seed` nao conseguem concluir
 - o agente local nao autentica contra a API
 
+## Deploy (Supabase + Render + Vercel)
+
+Guia direto: `docs/deploy.md`.
+
 ## O que esta implementado
 
 - Shell visual SaaS com sidebar escura, topbar, cards e tabelas modernas

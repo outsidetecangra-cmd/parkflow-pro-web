@@ -4,8 +4,12 @@ const repo = "parkflow-pro-web";
 const isPages = process.env.GITHUB_PAGES === "true";
 
 const nextConfig = {
-  output: "export",
+  ...(isPages ? { output: "export" } : {}),
   images: { unoptimized: true },
+  distDir: isPages ? ".next-build" : ".next",
+  experimental: {
+    workerThreads: true
+  },
   ...(isPages
     ? {
         basePath: `/${repo}`,
