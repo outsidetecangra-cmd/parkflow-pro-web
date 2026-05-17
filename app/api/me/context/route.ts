@@ -1,6 +1,6 @@
 import { jsonError, jsonOk } from "@/lib/server/http";
 import { decodeToken, getBearerToken } from "@/lib/server/security/token";
-import { getSupabaseServerClient } from "@/lib/server/supabase";
+import { getPrismaClient } from "@/lib/server/prisma";
 
 export const runtime = "nodejs";
 
@@ -16,83 +16,63 @@ export async function GET(request: Request) {
     return jsonError("Token invalido ou ausente", 401, "UNAUTHORIZED");
   }
 
-  const supabase = getSupabaseServerClient();
+  const prisma = getPrismaClient();
 
-  const { data: user, error: userError } = await supabase
-    .from("User")
-    .select("id,name,roleId,unitId")
-    .eq("id", payload.sub)
-    .maybeSingle();
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    include: {
+      role: { include: { permissions: true } },
+      unit: true,
+      unitAccesses: {
+        include: { unit: true },
+        orderBy: { createdAt: "asc" }
+      }
+    }
+  });
 
-  if (userError) return jsonError(`Falha ao consultar usuÃ¡rio: ${userError.message}`, 500, "DB_ERROR");
   if (!user) return jsonError("Usuario nao encontrado", 401, "UNAUTHORIZED");
 
-  const { data: roleRow } = user.roleId
-    ? await supabase.from("Role").select("name").eq("id", user.roleId).maybeSingle()
-    : { data: null as { name: string } | null };
+  const activeUnit =
+    user.unitAccesses.find((access) => access.isDefault)?.unit ??
+    user.unitAccesses[0]?.unit ??
+    user.unit ??
+    null;
 
-  const { data: permissions } = user.roleId
-    ? await supabase.from("Permission").select("code").eq("roleId", user.roleId)
-    : { data: [] as Array<{ code: string }> };
+  const unitDefaults = activeUnit
+    ? await prisma.unit.findUnique({
+        where: { id: activeUnit.id },
+        include: {
+          parkingLots: { orderBy: { name: "asc" }, take: 1 },
+          priceTables: { where: { active: true }, orderBy: { name: "asc" }, take: 1 },
+          cameras: { orderBy: { name: "asc" }, take: 1 },
+          terminals: { orderBy: { name: "asc" }, take: 1 }
+        }
+      })
+    : null;
 
-  const { data: accesses, error: accessError } = await supabase
-    .from("UserUnitAccess")
-    .select("unitId,isDefault,createdAt")
-    .eq("userId", user.id)
-    .order("createdAt", { ascending: true });
-
-  if (accessError) return jsonError(`Falha ao consultar acessos: ${accessError.message}`, 500, "DB_ERROR");
-
-  const allowedUnitIds = (accesses ?? []).map((access) => access.unitId);
-  const activeUnitId =
-    accesses?.find((access) => access.isDefault)?.unitId ?? accesses?.[0]?.unitId ?? user.unitId ?? null;
-
-  const { data: units } = allowedUnitIds.length
-    ? await supabase.from("Unit").select("id,name").in("id", allowedUnitIds)
-    : { data: [] as Array<{ id: string; name: string }> };
-
-  const activeUnit = activeUnitId ? (units ?? []).find((unit) => unit.id === activeUnitId) ?? null : null;
-
-  const { data: defaultParkingLot } = activeUnitId
-    ? await supabase.from("ParkingLot").select("id,name").eq("unitId", activeUnitId).order("name").limit(1).maybeSingle()
-    : { data: null as { id: string; name: string } | null };
-
-  const { data: defaultPriceTable } = activeUnitId
-    ? await supabase
-        .from("PriceTable")
-        .select("id,name")
-        .eq("unitId", activeUnitId)
-        .eq("active", true)
-        .order("name")
-        .limit(1)
-        .maybeSingle()
-    : { data: null as { id: string; name: string } | null };
-
-  const { data: defaultCamera } = activeUnitId
-    ? await supabase.from("Camera").select("id,name").eq("unitId", activeUnitId).order("name").limit(1).maybeSingle()
-    : { data: null as { id: string; name: string } | null };
-
-  const { data: defaultTerminal } = activeUnitId
-    ? await supabase.from("Terminal").select("id,name").eq("unitId", activeUnitId).order("name").limit(1).maybeSingle()
-    : { data: null as { id: string; name: string } | null };
+  const parkingLot = unitDefaults?.parkingLots[0] ?? null;
+  const priceTable = unitDefaults?.priceTables[0] ?? null;
+  const camera = unitDefaults?.cameras[0] ?? null;
+  const terminal = unitDefaults?.terminals[0] ?? null;
 
   return jsonOk({
-    user: { id: user.id, name: user.name, role: roleRow?.name ?? null },
+    user: { id: user.id, name: user.name, role: user.role?.name ?? null },
     activeUnit: activeUnit ? { id: activeUnit.id, name: activeUnit.name } : null,
     operationDefaults: {
-      parkingLotId: defaultParkingLot?.id ?? null,
-      parkingLotName: defaultParkingLot?.name ?? null,
-      priceTableId: defaultPriceTable?.id ?? null,
-      priceTableName: defaultPriceTable?.name ?? null,
-      cameraId: defaultCamera?.id ?? null,
-      cameraName: defaultCamera?.name ?? null,
-      terminalId: defaultTerminal?.id ?? null,
-      terminalName: defaultTerminal?.name ?? null
+      parkingLotId: parkingLot?.id ?? null,
+      parkingLotName: parkingLot?.name ?? null,
+      priceTableId: priceTable?.id ?? null,
+      priceTableName: priceTable?.name ?? null,
+      cameraId: camera?.id ?? null,
+      cameraName: camera?.name ?? null,
+      terminalId: terminal?.id ?? null,
+      terminalName: terminal?.name ?? null
     },
-    permissions: (permissions ?? []).map((permission) => permission.code),
-    allowedUnits: (accesses ?? []).map((access) => {
-      const unit = (units ?? []).find((u) => u.id === access.unitId);
-      return { id: access.unitId, name: unit?.name ?? access.unitId, isDefault: access.isDefault };
-    })
+    permissions: user.role?.permissions.map((permission) => permission.code) ?? [],
+    allowedUnits: user.unitAccesses.map((access) => ({
+      id: access.unit.id,
+      name: access.unit.name,
+      isDefault: access.isDefault
+    }))
   });
 }

@@ -1,7 +1,7 @@
 import { jsonError, jsonOk } from "@/lib/server/http";
 import { verifyPassword } from "@/lib/server/security/password";
 import { encodeToken } from "@/lib/server/security/token";
-import { getSupabaseServerClient } from "@/lib/server/supabase";
+import { getPrismaClient } from "@/lib/server/prisma";
 
 export const runtime = "nodejs";
 
@@ -22,42 +22,22 @@ export async function POST(request: Request) {
     return jsonError("JWT_SECRET ausente", 500, "MISSING_JWT_SECRET");
   }
 
-  const supabase = getSupabaseServerClient();
+  const prisma = getPrismaClient();
 
-  const { data: user, error: userError } = await supabase
-    .from("User")
-    .select("id,email,username,name,passwordHash,roleId,unitId")
-    .or(`email.eq.${body.login},username.eq.${body.login}`)
-    .maybeSingle();
-
-  if (userError) {
-    return jsonError(`Falha ao consultar usuÃ¡rio: ${userError.message}`, 500, "DB_ERROR");
-  }
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ email: body.login }, { username: body.login }] },
+    include: {
+      role: { include: { permissions: true } },
+      unitAccesses: { orderBy: { createdAt: "asc" } }
+    }
+  });
 
   if (!user || !verifyPassword(body.password, user.passwordHash)) {
     return jsonError("Credenciais invalidas", 401, "INVALID_CREDENTIALS");
   }
 
-  const { data: unitAccesses, error: accessError } = await supabase
-    .from("UserUnitAccess")
-    .select("unitId,isDefault,createdAt")
-    .eq("userId", user.id)
-    .order("createdAt", { ascending: true });
-
-  if (accessError) {
-    return jsonError(`Falha ao consultar acessos: ${accessError.message}`, 500, "DB_ERROR");
-  }
-
   const defaultUnit =
-    unitAccesses?.find((access) => access.isDefault)?.unitId ?? user.unitId ?? unitAccesses?.[0]?.unitId ?? null;
-
-  const { data: roleRow } = user.roleId
-    ? await supabase.from("Role").select("name").eq("id", user.roleId).maybeSingle()
-    : { data: null as { name: string } | null };
-
-  const { data: permissions } = user.roleId
-    ? await supabase.from("Permission").select("code").eq("roleId", user.roleId)
-    : { data: [] as Array<{ code: string }> };
+    user.unitAccesses.find((access) => access.isDefault)?.unitId ?? user.unitId ?? user.unitAccesses[0]?.unitId ?? null;
 
   const now = Math.floor(Date.now() / 1000);
   const accessExp = now + 60 * 60; // 1h
@@ -68,7 +48,7 @@ export async function POST(request: Request) {
       {
         sub: user.id,
         type: "user",
-        role: roleRow?.name,
+        role: user.role?.name,
         unitId: defaultUnit ?? undefined,
         name: user.name,
         iat: now,
@@ -80,7 +60,7 @@ export async function POST(request: Request) {
       {
         sub: user.id,
         type: "user",
-        role: roleRow?.name,
+        role: user.role?.name,
         iat: now,
         exp: refreshExp
       },
@@ -89,9 +69,9 @@ export async function POST(request: Request) {
     user: {
       id: user.id,
       name: user.name,
-      role: roleRow?.name ?? null,
-      allowedUnitIds: (unitAccesses ?? []).map((access) => access.unitId)
+      role: user.role?.name ?? null,
+      allowedUnitIds: user.unitAccesses.map((access) => access.unitId)
     },
-    permissions: (permissions ?? []).map((permission) => permission.code)
+    permissions: user.role?.permissions.map((permission) => permission.code) ?? []
   });
 }

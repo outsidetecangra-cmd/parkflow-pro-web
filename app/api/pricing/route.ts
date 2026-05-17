@@ -1,6 +1,8 @@
 import { jsonError, jsonOk } from "@/lib/server/http";
-import { getSupabaseServerClient } from "@/lib/server/supabase";
+import { getPrismaClient } from "@/lib/server/prisma";
 import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3001/api";
 
@@ -8,57 +10,45 @@ function buildUrl(pathname: string) {
   return `${API_BASE_URL}${pathname.startsWith("/") ? "" : "/"}${pathname}`;
 }
 
-function hasSupabaseEnv() {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
-}
+async function getPricingConfig() {
+  const prisma = getPrismaClient();
 
-async function ensurePricingConfig() {
-  const supabase = getSupabaseServerClient();
-
-  const active = await supabase
-    .from("PriceTable")
-    .select("id,name,graceMinutes,maxDaily,active")
-    .eq("active", true)
-    .order("name")
-    .limit(1)
-    .maybeSingle();
-
-  if (active.error) throw new Error(active.error.message);
-  let priceTable = active.data ?? null;
+  let priceTable = await prisma.priceTable.findFirst({
+    where: { active: true },
+    include: { rules: true }
+  });
 
   if (!priceTable) {
-    const any = await supabase.from("PriceTable").select("id,name,graceMinutes,maxDaily,active").order("name").limit(1).maybeSingle();
-    if (any.error) throw new Error(any.error.message);
-    priceTable = any.data ?? null;
+    priceTable = await prisma.priceTable.findFirst({
+      include: { rules: true }
+    });
   }
 
   if (!priceTable) {
-    const created = await supabase
-      .from("PriceTable")
-      .insert({ name: "Tabela PadrÃ£o", type: "PADRAO", active: true, graceMinutes: 15, maxDaily: null })
-      .select("id,name,graceMinutes,maxDaily,active")
-      .single();
-    if (created.error) throw new Error(created.error.message);
-    priceTable = created.data;
+    const created = await prisma.priceTable.create({
+      data: { name: "Tabela PadrÃ£o", type: "PADRAO", active: true, graceMinutes: 15, maxDaily: null }
+    });
 
-    const rulesInsert = await supabase.from("PriceRule").insert([
-      { priceTableId: priceTable.id, name: "Primeira Hora", ruleType: "primeira_hora", value: 12 },
-      { priceTableId: priceTable.id, name: "FraÃ§Ã£o Adicional (Hora)", ruleType: "fracao_adicional", value: 6 }
-    ]);
-    if (rulesInsert.error) throw new Error(rulesInsert.error.message);
+    await prisma.priceRule.createMany({
+      data: [
+        { priceTableId: created.id, name: "Primeira Hora", ruleType: "primeira_hora", value: 12 },
+        { priceTableId: created.id, name: "FraÃ§Ã£o Adicional (Hora)", ruleType: "fracao_adicional", value: 6 }
+      ]
+    });
+
+    priceTable = await prisma.priceTable.findUnique({ where: { id: created.id }, include: { rules: true } });
   }
 
-  const rules = await supabase.from("PriceRule").select("ruleType,value").eq("priceTableId", priceTable.id);
-  if (rules.error) throw new Error(rules.error.message);
+  if (!priceTable) throw new Error("Nenhuma tabela de preÃ§os encontrada");
 
-  const firstHourRule = rules.data?.find((rule) => rule.ruleType === "primeira_hora");
-  const additionalFractionRule = rules.data?.find((rule) => rule.ruleType === "fracao_adicional");
+  const firstHourRule = priceTable.rules.find((rule) => rule.ruleType === "primeira_hora");
+  const additionalFractionRule = priceTable.rules.find((rule) => rule.ruleType === "fracao_adicional");
 
   return {
     priceTableId: priceTable.id,
     name: priceTable.name,
-    graceMinutes: priceTable.graceMinutes ?? 0,
-    maxDaily: priceTable.maxDaily !== null && priceTable.maxDaily !== undefined ? Number(priceTable.maxDaily) : null,
+    graceMinutes: priceTable.graceMinutes,
+    maxDaily: priceTable.maxDaily ? Number(priceTable.maxDaily) : null,
     firstHour: firstHourRule ? Number(firstHourRule.value) : 12,
     additionalFraction: additionalFractionRule ? Number(additionalFractionRule.value) : 6
   };
@@ -66,9 +56,8 @@ async function ensurePricingConfig() {
 
 export async function GET() {
   try {
-    if (hasSupabaseEnv()) {
-      return jsonOk(await ensurePricingConfig());
-    }
+    if (process.env.DATABASE_URL) return jsonOk(await getPricingConfig());
+    return jsonError("DATABASE_URL ausente no ambiente (Vercel).", 500, "MISSING_DATABASE_URL");
 
     const response = await fetch(buildUrl("/pricing"), {
       method: "GET",
@@ -95,7 +84,7 @@ export async function PUT(request: Request) {
   const bodyText = await request.text();
 
   try {
-    if (hasSupabaseEnv()) {
+    if (process.env.DATABASE_URL) {
       const parsed = JSON.parse(bodyText) as {
         firstHour?: number;
         additionalFraction?: number;
@@ -103,48 +92,61 @@ export async function PUT(request: Request) {
         maxDaily?: number | null;
       };
 
-      const supabase = getSupabaseServerClient();
-      const current = await ensurePricingConfig();
-
-      const updateTable = await supabase
-        .from("PriceTable")
-        .update({
-          graceMinutes: typeof parsed.graceMinutes === "number" ? parsed.graceMinutes : current.graceMinutes,
-          maxDaily: parsed.maxDaily === null || typeof parsed.maxDaily === "number" ? parsed.maxDaily : current.maxDaily
-        })
-        .eq("id", current.priceTableId);
-
-      if (updateTable.error) throw new Error(updateTable.error.message);
-
-      async function upsertRule(ruleType: string, name: string, value: number) {
-        const existing = await supabase
-          .from("PriceRule")
-          .select("id")
-          .eq("priceTableId", current.priceTableId)
-          .eq("ruleType", ruleType)
-          .maybeSingle();
-
-        if (existing.error) throw new Error(existing.error.message);
-
-        if (existing.data?.id) {
-          const updated = await supabase.from("PriceRule").update({ value }).eq("id", existing.data.id);
-          if (updated.error) throw new Error(updated.error.message);
-        } else {
-          const created = await supabase.from("PriceRule").insert({ priceTableId: current.priceTableId, name, ruleType, value });
-          if (created.error) throw new Error(created.error.message);
-        }
+      const prisma = getPrismaClient();
+      let priceTable = await prisma.priceTable.findFirst({ where: { active: true } });
+      if (!priceTable) {
+        priceTable = await prisma.priceTable.create({
+          data: {
+            name: "Tabela PadrÃ£o",
+            type: "PADRAO",
+            active: true,
+            graceMinutes: typeof parsed.graceMinutes === "number" ? parsed.graceMinutes : 15,
+            maxDaily: parsed.maxDaily === null || typeof parsed.maxDaily === "number" ? parsed.maxDaily : null
+          }
+        });
+      } else {
+        await prisma.priceTable.update({
+          where: { id: priceTable.id },
+          data: {
+            graceMinutes: typeof parsed.graceMinutes === "number" ? parsed.graceMinutes : priceTable.graceMinutes,
+            maxDaily: parsed.maxDaily === null || typeof parsed.maxDaily === "number" ? parsed.maxDaily : priceTable.maxDaily
+          }
+        });
       }
 
       if (typeof parsed.firstHour === "number") {
-        await upsertRule("primeira_hora", "Primeira Hora", parsed.firstHour);
+        const existing = await prisma.priceRule.findFirst({ where: { priceTableId: priceTable.id, ruleType: "primeira_hora" } });
+        if (existing) {
+          await prisma.priceRule.update({ where: { id: existing.id }, data: { value: parsed.firstHour } });
+        } else {
+          await prisma.priceRule.create({
+            data: { priceTableId: priceTable.id, name: "Primeira Hora", ruleType: "primeira_hora", value: parsed.firstHour }
+          });
+        }
       }
 
       if (typeof parsed.additionalFraction === "number") {
-        await upsertRule("fracao_adicional", "FraÃ§Ã£o Adicional (Hora)", parsed.additionalFraction);
+        const existing = await prisma.priceRule.findFirst({
+          where: { priceTableId: priceTable.id, ruleType: "fracao_adicional" }
+        });
+        if (existing) {
+          await prisma.priceRule.update({ where: { id: existing.id }, data: { value: parsed.additionalFraction } });
+        } else {
+          await prisma.priceRule.create({
+            data: {
+              priceTableId: priceTable.id,
+              name: "FraÃ§Ã£o Adicional (Hora)",
+              ruleType: "fracao_adicional",
+              value: parsed.additionalFraction
+            }
+          });
+        }
       }
 
       return jsonOk({ message: "ConfiguraÃ§Ãµes de preÃ§o atualizadas com sucesso" });
     }
+
+    return jsonError("DATABASE_URL ausente no ambiente (Vercel).", 500, "MISSING_DATABASE_URL");
 
     const response = await fetch(buildUrl("/pricing"), {
       method: "PUT",
@@ -167,4 +169,3 @@ export async function PUT(request: Request) {
     return jsonError(message, 502, "PRICING_UNAVAILABLE");
   }
 }
-

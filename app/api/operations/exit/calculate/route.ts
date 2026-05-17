@@ -1,6 +1,8 @@
 import { computePricing } from "@/app/api/operations/_shared";
 import { jsonError, jsonOk } from "@/lib/server/http";
-import { getSupabaseServerClient } from "@/lib/server/supabase";
+import { getPrismaClient } from "@/lib/server/prisma";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   let body: {
@@ -21,62 +23,45 @@ export async function POST(request: Request) {
     return jsonError("ticketCode e obrigatorio", 400, "INVALID_EXIT_CALCULATION_PAYLOAD");
   }
 
-  const supabase = getSupabaseServerClient();
+  const prisma = getPrismaClient();
 
-  const ticketRes = await supabase
-    .from("Ticket")
-    .select("id,code,status,unitId,entryAt,vehicleId,priceTableId")
-    .eq("code", body.ticketCode)
-    .maybeSingle();
-
-  if (ticketRes.error) return jsonError(`Falha ao buscar ticket: ${ticketRes.error.message}`, 500, "DB_ERROR");
-  const ticket = ticketRes.data;
+  const ticket = await prisma.ticket.findUnique({
+    where: { code: body.ticketCode },
+    include: {
+      vehicle: true,
+      priceTable: { include: { rules: true } }
+    }
+  });
   if (!ticket) return jsonError("Ticket nao encontrado", 404, "TICKET_NOT_FOUND");
 
   if (ticket.unitId && body.unitId && ticket.unitId !== body.unitId) {
     return jsonError("O ticket nao pertence a unidade informada", 403, "UNIT_SCOPE_MISMATCH");
   }
 
-  const [vehicleRes, priceTableRes, rulesRes] = await Promise.all([
-    ticket.vehicleId ? supabase.from("Vehicle").select("plate").eq("id", ticket.vehicleId).maybeSingle() : Promise.resolve({ data: null, error: null }),
-    ticket.priceTableId ? supabase.from("PriceTable").select("graceMinutes,maxDaily").eq("id", ticket.priceTableId).maybeSingle() : Promise.resolve({ data: null, error: null }),
-    ticket.priceTableId ? supabase.from("PriceRule").select("ruleType,value").eq("priceTableId", ticket.priceTableId) : Promise.resolve({ data: [], error: null })
-  ]);
-
-  if (vehicleRes.error) return jsonError(`Falha ao buscar veiculo: ${vehicleRes.error.message}`, 500, "DB_ERROR");
-  if (priceTableRes.error) return jsonError(`Falha ao buscar tabela: ${priceTableRes.error.message}`, 500, "DB_ERROR");
-  if (rulesRes.error) return jsonError(`Falha ao buscar regras: ${rulesRes.error.message}`, 500, "DB_ERROR");
-
   const exitAt = body.exitAt ? new Date(body.exitAt) : new Date();
-  const entryAt = new Date(ticket.entryAt as unknown as string);
+  const entryAt = ticket.entryAt;
 
-  const firstHourRule = rulesRes.data?.find((rule) => rule.ruleType === "primeira_hora");
-  const additionalFractionRule = rulesRes.data?.find((rule) => rule.ruleType === "fracao_adicional");
+  const firstHourRule = ticket.priceTable?.rules?.find((rule) => rule.ruleType === "primeira_hora");
+  const additionalFractionRule = ticket.priceTable?.rules?.find((rule) => rule.ruleType === "fracao_adicional");
 
   const pricing = computePricing({
     entryAt,
     exitAt,
-    graceMinutes: priceTableRes.data?.graceMinutes ?? 15,
-    maxDaily: priceTableRes.data?.maxDaily !== null && priceTableRes.data?.maxDaily !== undefined ? Number(priceTableRes.data.maxDaily) : null,
+    graceMinutes: ticket.priceTable?.graceMinutes ?? 15,
+    maxDaily: ticket.priceTable?.maxDaily ? Number(ticket.priceTable.maxDaily) : null,
     couponCode: body.couponCode,
     partnerValidationCode: body.partnerValidationCode,
     firstHourValue: firstHourRule ? Number(firstHourRule.value) : undefined,
     nextHourValue: additionalFractionRule ? Number(additionalFractionRule.value) : undefined
   });
 
-  const latestCapture = await supabase
-    .from("LprCapture")
-    .select("plate,createdAt")
-    .eq("ticketId", ticket.id)
-    .eq("direction", "saida")
-    .order("createdAt", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (latestCapture.error) return jsonError(`Falha ao buscar LPR: ${latestCapture.error.message}`, 500, "DB_ERROR");
+  const latestCapture = await prisma.lprCapture.findFirst({
+    where: { ticketId: ticket.id, direction: "saida" },
+    orderBy: { createdAt: "desc" }
+  });
 
   const alerts =
-    latestCapture.data && vehicleRes.data?.plate && latestCapture.data.plate !== vehicleRes.data.plate
+    latestCapture && ticket.vehicle?.plate && latestCapture.plate !== ticket.vehicle.plate
       ? [{ code: "LPR_MISMATCH", message: "Leitura de placa divergente na saida" }]
       : [];
 
@@ -86,4 +71,3 @@ export async function POST(request: Request) {
     alerts
   });
 }
-
