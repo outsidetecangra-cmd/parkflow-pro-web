@@ -10,16 +10,14 @@ Este repo separa:
 
 1. Crie um projeto no Supabase.
 2. Pegue **duas** connection strings:
-   - **Pooler/PgBouncer** (porta 6543) para runtime (API).
-   - **Direta** (porta 5432) para migrations/seed.
+   - **Pooler/PgBouncer** (porta 6543) para runtime (API) e migrations (na free tier).
 3. Variáveis (Render / local):
 
 ```
 DATABASE_URL=...pooler...:6543/...?...pgbouncer=true
-DIRECT_URL=...db.<project-ref>.supabase.co:5432/...?...sslmode=require
 ```
 
-Observação: o `prisma/schema.prisma` usa `directUrl` para evitar problemas de migration com pooler.
+Observação: se você habilitar o IPv4 add-on/dedicated IP no Supabase, pode usar conexão direta (5432) para migrations/seed.
 
 ## 2) Render (API)
 
